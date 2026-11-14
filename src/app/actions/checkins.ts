@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { today } from "@/lib/clock";
 import { saveAnswer } from "@/lib/answers";
@@ -61,6 +62,13 @@ export async function saveCheckin(_: FormState, f: FormData): Promise<FormState>
   const p = parse(key, f);
   if ("error" in p) return p;
   await saveAnswer(u.id, u.teamId, s.occ.id, key, s.occ.month, p.answers);
+  if (key === "signup") {
+    // "Yes, I signed people" tells the leader once for this question. Changing to "no" withdraws it if the leader has not acted.
+    if (p.answers.su === "yes")
+      await db()`insert into claims (team_id, by_user, count, occ) values (${u.teamId}, ${u.id}, ${Number(p.answers.count)}, ${s.occ.id})
+                 on conflict (by_user, occ) where occ is not null do update set count = excluded.count, updated_at = now() where claims.state = 'review'`;
+    else await db()`update claims set state = 'dismissed', updated_at = now() where by_user = ${u.id} and occ = ${s.occ.id} and state = 'review'`;
+  }
   revalidatePath("/", "layout");
   return { ok: key === "ppv" && Number(p.answers.ppv) < 100 ? "Saved. Under 100 PPV, so your leader will see a flag." : key === "ppv" ? "Saved. You meet the 100 PPV minimum." : "Saved." };
 }

@@ -3,7 +3,7 @@
 Next.js + TypeScript, a Supabase (Postgres) database, Resend for email, hosted on Vercel.
 The clickable prototype in `../prototype` is the design reference. This folder is the real thing.
 
-## What works now (milestones 1 and 2: accounts, team and monthly check-ins)
+## What works now (milestones 1 to 3: accounts, team, check-ins, ranks and sign-ups)
 
 - Team leader registration with email confirmation, TeamPulse ID, sign-in with ID and password (5 wrong tries lock the account)
 - Add members, welcome email with their ID, the website link and three steps; the member creates a password, uploads a picture and adds phone and city on one page
@@ -16,7 +16,11 @@ The clickable prototype in `../prototype` is the design reference. This folder i
 - **Leader dashboard**: check-in completion (target 75 to 80%), who has not fully replied, who has not paid, money dropping soon, team income by month, and each member's answers on their page.
 - **Test clock** at `/dev/clock` (not available in production): moves "today" to watch windows open and close, and runs the daily email job by hand.
 
-Coming next: PPV and QPV rank recommendations, sign-up reports from the 25th check-in to the leader, then desktop apps.
+- **Rank recommendations**: from each member's reported PPV and QPV, the leader is told who qualifies for Manager (500 QPV), Senior Manager (1,000) or Executive Manager (2,000) with at least 100 PPV. The leader confirms (rank changes, the team feed shows it, rank history is kept) or dismisses (stays dismissed for that rank). The QPV worked out from the team tree ("System") is shown beside the reported one. Director follows its own rules and is never recommended.
+- **Sign-up reports**: a member reports a new sign-up on any day, or by answering "Yes" in the 25th check-in. The leader reviews it: ask the member for the person's details (emailed button), add the person (form pre-filled, sponsor set to the reporting member), or dismiss. Changing the check-in answer to "No" withdraws the report if the leader has not acted.
+- **Team table, tree and profiles** now show PPV and QPV, and members see their progress to the next rank.
+
+Coming next: Resend setup for real email delivery to any address, a privacy notice, then desktop apps on the real app.
 
 ## Try it on your computer (no accounts needed)
 
@@ -45,7 +49,7 @@ Open http://localhost:3000. With no email service connected, every email is save
 
 Also set `CRON_SECRET` in Vercel (any long random text, `openssl rand -base64 32`). Vercel then sends it to the daily job, and the job refuses anyone who does not have it. Vercel's free plan allows one daily job, which is all this needs.
 
-After pulling new code, run `npm run db:migrate` again so new database changes (for example `002_checkins.sql`) reach Supabase.
+After pulling new code, run `npm run db:migrate` again so new database changes (`002_checkins.sql`, `003_ranks_signups.sql`) reach Supabase.
 
 Never commit `.env.local`. Keys go only into Supabase, Resend and Vercel.
 

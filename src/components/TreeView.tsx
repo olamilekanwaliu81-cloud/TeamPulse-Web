@@ -6,7 +6,7 @@ import { initials } from "@/lib/rules";
 
 export type TreeNode = {
   id: string; name: string; photo: string | null; rank: string; status: "invited" | "active" | "inactive";
-  tpId: string; children: TreeNode[];
+  tpId: string; ppv: number | null; qpv: number | null; children: TreeNode[];
 };
 
 const HUES = ["#3A5BA0", "#7A3B3B", "#4B4B9A", "#3B6B4F", "#6B5A2B", "#5A3B7A"];
@@ -22,7 +22,8 @@ function Card({ n, root, count, closed, toggle }: { n: TreeNode; root?: boolean;
       {face}
       <b className="on">{root ? "You" : n.name}</b>
       <span className="orank">{n.rank}</span>
-      <span className="ost">{n.status === "invited" ? "Invited. No login yet." : n.status === "inactive" ? "Inactive" : root ? `${count} directly sponsored` : "Active"}</span>
+      <span className="ost">{n.status === "invited" ? "Invited. No login yet." : n.status === "inactive" ? "Inactive" : root ? `${count} directly sponsored` : n.ppv == null ? "No PPV yet" : `${n.ppv.toLocaleString("en-US")} PPV`}</span>
+      {!root && n.status === "active" && count > 0 && n.qpv != null && <span className="ost sm">{n.qpv.toLocaleString("en-US")} QPV</span>}
       <span className="mono oid">{n.tpId}</span>
     </>
   );

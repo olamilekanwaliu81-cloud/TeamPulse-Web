@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icons";
 
-export type NavItem = { href: string; label: string; icon: "dashboard" | "team" | "profile" | "checkins" };
+export type NavItem = { href: string; label: string; icon: "dashboard" | "team" | "profile" | "checkins" | "signups"; badge?: number };
 
 export function NavLinks({ items }: { items: NavItem[] }) {
   const path = usePathname();
@@ -12,7 +12,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
     <nav aria-label="Sections">
       {items.map((i) => (
         <Link key={i.href} href={i.href} className="nav-item" aria-current={path === i.href || path.startsWith(i.href + "/") ? "page" : undefined}>
-          <Icon name={i.icon} /><span>{i.label}</span>
+          <Icon name={i.icon} /><span>{i.label}</span>{i.badge ? <span className="pill warn">{i.badge}</span> : null}
         </Link>
       ))}
     </nav>

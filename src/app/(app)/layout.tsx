@@ -4,6 +4,9 @@ import { teamMembers, teamName, scopeFor } from "@/lib/users";
 import { today } from "@/lib/clock";
 import { answeredSets } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, openToday, parseDay, teamLine } from "@/lib/checkins";
+import { teamClaims, claimsBy } from "@/lib/claims";
+import { monthStats, recommendations } from "@/lib/stats";
+import { rankName as rn } from "@/lib/rules";
 import { Brand } from "@/components/AuthShell";
 import { NavLinks, type NavItem } from "@/components/NavLinks";
 import { TopBar, type Notice } from "@/components/TopBar";
@@ -21,7 +24,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const active = mine.filter((m) => m.status === "active" && m.role === "member");
 
   const notices: Notice[] = [];
+  const claims = u.role === "admin" ? (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready") : [];
   if (u.role === "admin") {
+    for (const c of claims) {
+      const by = all.find((m) => m.id === c.byUser);
+      notices.push({ kind: "signup", title: `${by?.name ?? "Someone"} reported ${c.count} new sign-up${c.count > 1 ? "s" : ""}`, sub: c.state === "ready" ? "Details received. Ready to add." : "Waiting for your review", href: "/signups" });
+    }
+    const recs = await recommendations(u.teamId, all, await monthStats(u.teamId, all, T));
+    for (const r of recs) notices.push({ kind: "rank", title: `${r.user.name} may be ready for ${rn(r.to)}`, sub: `PPV ${r.stat.ppv} · QPV ${r.stat.qpv}`, href: "/dashboard" });
     for (const m of mine.filter((x) => x.status === "invited"))
       notices.push({ kind: "invite", title: `${m.name} has not created a login yet`, sub: `ID ${m.tpId}`, href: "/dashboard" });
     for (const o of open) {
@@ -29,13 +39,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       if (late) notices.push({ kind: "checkin", title: `${late} member${late > 1 ? "s have" : " has"} not answered "${CI[o.key].title}"`, sub: `Closes ${dmyDay(o.close)}`, href: "/dashboard" });
     }
   } else {
+    for (const c of (await claimsBy(u.id)).filter((x) => x.state === "details_asked"))
+      notices.push({ kind: "signup", title: "Your team leader needs details of your new sign-up", sub: "Tap to send them", href: `/signups/${c.id}/details` });
     for (const o of open)
       if (!answered.get(u.id)?.has(o.id)) notices.push({ kind: "checkin", title: `${CI[o.key].title} is open`, sub: `Answer by ${dmyDay(o.close)}`, href: `/checkins?key=${o.key}` });
   }
 
   const nav: NavItem[] = u.role === "admin"
-    ? [{ href: "/dashboard", label: "Dashboard", icon: "dashboard" }, { href: "/team", label: "Team", icon: "team" }, { href: "/profile", label: "Settings", icon: "profile" }]
-    : [{ href: "/home", label: "Home", icon: "dashboard" }, { href: "/checkins", label: "Check-ins", icon: "checkins" }, ...(u.rank >= 2 ? [{ href: "/team", label: "My team", icon: "team" } as NavItem] : []), { href: "/profile", label: "My profile", icon: "profile" }];
+    ? [{ href: "/dashboard", label: "Dashboard", icon: "dashboard" }, { href: "/team", label: "Team", icon: "team" }, { href: "/signups", label: "Sign-ups", icon: "signups", badge: claims.length }, { href: "/profile", label: "Settings", icon: "profile" }]
+    : [{ href: "/home", label: "Home", icon: "dashboard" }, { href: "/checkins", label: "Check-ins", icon: "checkins" }, { href: "/signups", label: "Report a sign-up", icon: "signups" }, ...(u.rank >= 2 ? [{ href: "/team", label: "My team", icon: "team" } as NavItem] : []), { href: "/profile", label: "My profile", icon: "profile" }];
 
   const { y, m } = parseDay(T);
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();

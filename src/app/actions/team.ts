@@ -31,6 +31,10 @@ export async function addMember(_: FormState, f: FormData): Promise<FormState> {
     insert into users (team_id, role, name, email, neo_id, tp_id, status, sponsor_id, first_pv, phone)
     values (${leader.teamId}, 'member', ${name}, ${email}, ${neo}, ${tpId}, 'invited', ${sponsor.id}, ${Math.round(pv)}, ${phone}) returning id`;
   await sql`insert into feed (team_id, kind, who, by) values (${leader.teamId}, 'join', ${row.id}, ${sponsor.id})`;
+  const claimId = text(f, "claim");
+  if (/^[0-9a-f-]{36}$/.test(claimId))
+    await sql`update claims set state = 'added', member_id = ${row.id}, updated_at = now()
+              where id = ${claimId} and team_id = ${leader.teamId} and state in ('review', 'details_asked', 'ready')`;
   await logAudit(leader.teamId, leader.id, "member.added", { member: row.id });
   const member = (await userById(row.id))!;
   await sendWelcomeEmail(member, sponsor);

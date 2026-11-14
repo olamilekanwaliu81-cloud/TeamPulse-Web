@@ -5,6 +5,8 @@ import { rankName } from "@/lib/rules";
 import { scopeFor, teamMembers, teamName, type User } from "@/lib/users";
 import { Avatar } from "@/components/Avatar";
 import { TreeView, type TreeNode } from "@/components/TreeView";
+import { today } from "@/lib/clock";
+import { monthStats } from "@/lib/stats";
 
 export const metadata = { title: "Team" };
 
@@ -16,10 +18,11 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
   const { view } = await searchParams;
   const [all, team] = await Promise.all([teamMembers(u.teamId), teamName(u.teamId)]);
   const list = scopeFor(u, all);
+  const stats = await monthStats(u.teamId, all, await today());
   const ids = new Set(list.map((m) => m.id));
   const byId = new Map(all.map((m) => [m.id, m]));
   const kids = (id: string) => list.filter((m) => m.sponsorId === id);
-  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, children: kids(m.id).map(node) });
+  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null, children: kids(m.id).map(node) });
   // people whose sponsor is outside the list hang directly under the viewer
   const top = list.filter((m) => !m.sponsorId || !ids.has(m.sponsorId));
   const root: TreeNode = { ...node(u), children: top.map(node) };
@@ -46,7 +49,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
         ) : (
           <div className="scroll">
             <table>
-              <thead><tr><th>Member</th><th>Rank</th><th>NeoLife ID</th><th>Sponsor</th><th>Joined</th></tr></thead>
+              <thead><tr><th>Member</th><th>Rank</th><th>NeoLife ID</th><th className="num">PPV</th><th className="num">QPV</th><th>Sponsor</th><th>Joined</th></tr></thead>
               <tbody>
                 {list.map((m) => (
                   <tr key={m.id} className="click">
@@ -54,6 +57,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
                       <div><div style={{ fontWeight: 700 }}>{m.name} {pill(m)}</div><div className="mono sub">{m.tpId}</div></div></Link></td>
                     <td><span className={`pill ${m.rank >= 1 ? "acc" : ""}`}>{rankName(m.rank)}</span></td>
                     <td className="mono">{m.neoId}</td>
+                    <td className="num">{stats.get(m.id)?.ppv ?? "—"}</td>
+                    <td className="num">{stats.get(m.id)?.qpv?.toLocaleString("en-US") ?? "—"}</td>
                     <td>{(m.sponsorId && byId.get(m.sponsorId)?.name) || "—"}</td>
                     <td>{m.joinedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
                   </tr>

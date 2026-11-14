@@ -9,6 +9,10 @@ import { firstName, rankName } from "@/lib/rules";
 import { ago } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { resendInvite } from "@/app/actions/team";
+import { monthStats, recommendations } from "@/lib/stats";
+import { teamClaims } from "@/lib/claims";
+import { RANKS } from "@/lib/rules";
+import { confirmRank, dismissRank } from "@/app/actions/ranks";
 import { remindMember } from "@/app/actions/checkins";
 
 export const metadata = { title: "Dashboard" };
@@ -46,8 +50,12 @@ export default async function Dashboard() {
   const paidAns = await teamAnswers(u.teamId, "paid", paidOcc.month);
   const unpaid = paidAns.filter((a) => a.answers.paid === false && a.occ === paidOcc.id);
 
-  const feed = await db()<{ id: string; who: string; by: string | null; created_at: Date }[]>`
-    select id, who, by, created_at from feed where team_id = ${u.teamId} and kind = 'join' order by created_at desc limit 6`;
+  const stats = await monthStats(u.teamId, all, T);
+  const recs = await recommendations(u.teamId, all, stats);
+  const claims = (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready");
+  const activeP = active.filter((m) => (stats.get(m.id)?.ppv ?? 0) >= 100).length;
+  const feed = await db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
+    select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 8`;
 
   return (
     <>
@@ -70,7 +78,7 @@ export default async function Dashboard() {
         <>
           <div className="stats4" style={{ marginBottom: 16 }}>
             <div><b className="n1">{members.length}</b><span>Members</span></div>
-            <div><b className="n2">{active.length}</b><span>Active</span></div>
+            <div><b className="n2">{activeP}</b><span>Active, 100+ PPV</span></div>
             <div><b className="n3">{invited.length}</b><span>Invited, no login yet</span></div>
             <div><b className="n4">{got}/{slots}</b><span>Check-in answers in</span></div>
           </div>
@@ -83,6 +91,22 @@ export default async function Dashboard() {
                     <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn sm" type="submit">Resend</button></form>
                   </div>))}</div>
               ) : <p className="sub">Everyone has created their login.</p>}
+            </section>
+            <section className="card"><h3>Rank-up recommendations</h3>
+              {recs.length ? <div className="rows">{recs.map((r) => (
+                <div className="row" key={r.user.id}>
+                  <div className="grow"><div className="name">{r.user.name}</div>
+                    <div className="sub">PPV {r.stat.ppv} · QPV {r.stat.qpv?.toLocaleString("en-US")} reaches {RANKS[r.to].name} ({RANKS[r.to].qpv.toLocaleString("en-US")}). System shows {r.stat.sysQpv.toLocaleString("en-US")}.</div></div>
+                  <form action={confirmRank}><input type="hidden" name="id" value={r.user.id} /><button className="btn sm primary" type="submit">Confirm</button></form>
+                  <form action={dismissRank}><input type="hidden" name="id" value={r.user.id} /><button className="btn sm" type="submit">Dismiss</button></form>
+                </div>))}</div>
+                : <p className="sub">No one has reached a new threshold.</p>}
+            </section>
+            <section className="card"><h3>Reported sign-ups</h3>
+              {claims.length ? <div className="rows">{claims.slice(0, 4).map((c) => (
+                <div className="row" key={c.id}><div className="grow"><div className="name">{byId.get(c.byUser)?.name ?? "Someone"} reports {c.count}</div><div className="sub">{c.state === "ready" ? "Details received" : "Waiting for your review"}</div></div>
+                  <Link className="btn sm" href="/signups">Review</Link></div>))}</div>
+                : <p className="sub">No reports waiting.</p>}
             </section>
             <section className="card"><h3>Not fully replied</h3>
               {!due.length ? <p className="sub">The first question of the month opens on {dmyDay(occs[0].open)}.</p>
@@ -115,12 +139,30 @@ export default async function Dashboard() {
                 return who ? (
                   <div className="row" key={f.id} style={{ marginTop: 8 }}>
                     <Avatar user={who} />
-                    <div className="grow"><div className="name">{who.name} joined the team</div><div className="sub">{by ? `Sponsored by ${by.name} · ` : ""}{ago(f.created_at)}</div></div>
+                    <div className="grow"><div className="name">{f.kind === "rank" ? `${who.name} is now ${RANKS[f.data?.to ?? who.rank].name}` : `${who.name} joined the team`}</div><div className="sub">{f.kind === "join" && by ? `Sponsored by ${by.name} · ` : ""}{ago(f.created_at)}</div></div>
                     <span className="pill acc">{rankName(who.rank)}</span>
                   </div>) : null;
               }) : <p className="sub">New members appear here.</p>}
             </section>
           </div>
+          <section className="card" style={{ marginTop: 16 }}>
+            <h2>Team this month</h2>
+            <p className="sub">Select a name for their answers and history. &quot;System&quot; is the QPV worked out from the members added here. Customers outside the system explain most gaps.</p>
+            <div className="scroll"><table>
+              <thead><tr><th>Member</th><th>Rank</th><th className="num">PPV</th><th className="num">QPV</th><th className="num">System</th><th className="num">Income</th><th>Monthly</th><th>Replies</th></tr></thead>
+              <tbody>{active.map((m) => { const s = stats.get(m.id)!; const d = dueOf(m).length;
+                return (<tr key={m.id} className="click">
+                  <td><Link className="who" href={`/team/${m.id}`} style={{ color: "inherit", textDecoration: "none" }}><Avatar user={m} /><div><div style={{ fontWeight: 700 }}>{m.name}</div><div className="mono sub">{m.tpId}</div></div></Link></td>
+                  <td><span className={`pill ${m.rank >= 1 ? "acc" : ""}`}>{rankName(m.rank)}</span></td>
+                  <td className="num">{s.ppv ?? "—"}{s.ppv != null && s.ppv < 100 ? <span className="pill warn" style={{ marginLeft: 6 }}>&lt;100</span> : null}</td>
+                  <td className="num">{s.qpv?.toLocaleString("en-US") ?? "—"}</td>
+                  <td className="num">{s.sysQpv.toLocaleString("en-US")}</td>
+                  <td className="num">{s.earn === "none" ? "None yet" : typeof s.earn === "number" ? money(s.earn) : "—"}</td>
+                  <td>{s.paid === true ? <span className="pill good">Paid</span> : s.paid === false ? <span className="pill bad">Not paid</span> : <span className="sub">—</span>}</td>
+                  <td>{d ? `${per.get(m.id) ?? 0}/${d}` : "—"}</td>
+                </tr>); })}</tbody>
+            </table></div>
+          </section>
           <p className="sub" style={{ marginTop: 12 }}>{monthLabel(y, mo)} check-ins: {occs.map((o) => `${CI[o.key].day} ${o.open <= T ? "open" : "not yet"}`).join(" · ")}</p>
         </>
       )}

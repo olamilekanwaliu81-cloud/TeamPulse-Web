@@ -7,6 +7,8 @@ import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { resendInvite, sendMemberReset } from "@/app/actions/team";
 import { answersOf, summarize } from "@/lib/answers";
+import { rankHistory, monthStats } from "@/lib/stats";
+import { today } from "@/lib/clock";
 import { CI, dmyDay, monthLabel, parseDay } from "@/lib/checkins";
 
 export default async function Member({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +22,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
   const sponsor = all.find((x) => x.id === m.sponsorId);
   const admin = viewer.role === "admin";
   const history = m.status === "invited" ? [] : await answersOf(m.id);
+  const [ranks, stat] = await Promise.all([rankHistory(m.id), monthStats(viewer.teamId, all, await today()).then((s) => s.get(m.id))]);
   return (
     <>
       <div className="head"><div><h2>{m.name}</h2><p className="sub" style={{ margin: "2px 0 0" }}>{rankName(m.rank)} · {m.status === "invited" ? "Invited, no login yet" : m.status === "inactive" ? "Inactive" : "Active"}</p></div>
@@ -30,6 +33,8 @@ export default async function Member({ params }: { params: Promise<{ id: string 
           <div><div className="k">Sponsor</div><div className="v">{sponsor?.name ?? "—"}</div></div>
           <div><div className="k">Joined</div><div className="v">{dmy(m.joinedAt)}</div></div>
           <div><div className="k">First order</div><div className="v">{m.firstPv ?? 0} PV</div></div>
+          <div><div className="k">PPV this month</div><div className="v">{stat?.ppv ?? "—"}</div></div>
+          <div><div className="k">QPV reported / system</div><div className="v">{stat?.qpv?.toLocaleString("en-US") ?? "—"} / {(stat?.sysQpv ?? 0).toLocaleString("en-US")}</div></div>
           <div><div className="k">City</div><div className="v">{m.city || "—"}</div></div>
           {admin && <div><div className="k">Email</div><div className="v">{m.email}</div></div>}
           {admin && <div><div className="k">Phone</div><div className="v">{m.phone || "—"}</div></div>}
@@ -41,6 +46,10 @@ export default async function Member({ params }: { params: Promise<{ id: string 
             {m.status === "active" && <form action={sendMemberReset}><input type="hidden" name="id" value={m.id} /><button className="btn" type="submit">Send password reset</button></form>}
           </div>
         )}
+      </section>
+      <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>
+        <h3>Rank history</h3>
+        {ranks.length === 0 ? <p className="sub">No rank changes yet.</p> : <div className="rows">{ranks.map((r) => <div className="row" key={r.id}><div className="grow">{rankName(r.from)} to <b>{rankName(r.to)}</b></div><span className="sub">{dmy(r.at)}</span></div>)}</div>}
       </section>
       <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>
         <h3>Check-in answers</h3>
