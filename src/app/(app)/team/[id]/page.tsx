@@ -6,6 +6,8 @@ import { rankName } from "@/lib/rules";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { resendInvite, sendMemberReset } from "@/app/actions/team";
+import { answersOf, summarize } from "@/lib/answers";
+import { CI, dmyDay, monthLabel, parseDay } from "@/lib/checkins";
 
 export default async function Member({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await requireUser();
@@ -17,6 +19,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
   if (m.id !== viewer.id && !scopeFor(viewer, all).some((x) => x.id === m.id)) notFound(); // outside the viewer's downline
   const sponsor = all.find((x) => x.id === m.sponsorId);
   const admin = viewer.role === "admin";
+  const history = m.status === "invited" ? [] : await answersOf(m.id);
   return (
     <>
       <div className="head"><div><h2>{m.name}</h2><p className="sub" style={{ margin: "2px 0 0" }}>{rankName(m.rank)} · {m.status === "invited" ? "Invited, no login yet" : m.status === "inactive" ? "Inactive" : "Active"}</p></div>
@@ -38,6 +41,16 @@ export default async function Member({ params }: { params: Promise<{ id: string 
             {m.status === "active" && <form action={sendMemberReset}><input type="hidden" name="id" value={m.id} /><button className="btn" type="submit">Send password reset</button></form>}
           </div>
         )}
+      </section>
+      <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>
+        <h3>Check-in answers</h3>
+        {history.length === 0 ? <p className="sub">No answers yet.</p> : history.map((a) => (
+          <div className="row" key={a.occ} style={{ alignItems: "flex-start" }}>
+            <div className="grow"><div className="name">{CI[a.key].title} <span className="sub">· {monthLabel(parseDay(a.month).y, parseDay(a.month).m)} {parseDay(a.month).y}</span></div>
+              <div className="sub">{summarize(a)}</div></div>
+            <span className="sub">{dmyDay(a.answeredAt.toISOString().slice(0, 10))}</span>
+          </div>
+        ))}
       </section>
     </>
   );

@@ -344,3 +344,5 @@ a.nav-item{display:flex}
 a.chip{display:inline-flex;align-items:center}
 .pop-id .av{flex:none}
 a.ocard{color:inherit;text-decoration:none}
+
+a.ci-item{text-decoration:none;color:inherit}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icons";
 
-export type NavItem = { href: string; label: string; icon: "dashboard" | "team" | "profile" };
+export type NavItem = { href: string; label: string; icon: "dashboard" | "team" | "profile" | "checkins" };
 
 export function NavLinks({ items }: { items: NavItem[] }) {
   const path = usePathname();
