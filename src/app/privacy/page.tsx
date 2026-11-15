@@ -40,10 +40,13 @@ export default function Privacy() {
       <p>For as long as you are on the team. When your leader removes you, or you ask us to delete your account, your personal details are deleted. Records that your leader needs for past months may be kept in a form that no longer names you, where the law allows.</p>
 
       <h2>Your rights</h2>
-      <p>You may ask to see what we hold about you, to correct it, to delete it, to limit how it is used, to object to it, or to receive a copy. You can correct your phone, city, bio and photo yourself on your profile page. For anything else, ask your team leader, who can fix or remove your record. If you are not satisfied, you may complain to the Nigeria Data Protection Commission (<a className="link" href="https://ndpc.gov.ng" target="_blank" rel="noopener noreferrer">ndpc.gov.ng</a>).</p>
+      <p>You may ask to see what we hold about you, to correct it, to delete it, to limit how it is used, to object to it, or to receive a copy. You can correct your phone, city, bio and photo yourself on your profile page. For anything else, ask your team leader, who can fix or remove your record, or write to <a className="link" href="mailto:teampulse@owpublishiing.com">teampulse@owpublishiing.com</a>. If you are not satisfied, you may complain to the Nigeria Data Protection Commission (<a className="link" href="https://ndpc.gov.ng" target="_blank" rel="noopener noreferrer">ndpc.gov.ng</a>).</p>
 
       <h2>Keeping it safe</h2>
       <p>The database is reachable only from the TeamPulse server, sign-in links are single-use and stored only as hashes, passwords are hashed, accounts lock after repeated wrong passwords, and all traffic uses HTTPS. No system is perfectly safe, so please pick a password you use nowhere else.</p>
+
+      <h2>Contact</h2>
+      <p>For any privacy question or request, email <a className="link" href="mailto:teampulse@owpublishiing.com">teampulse@owpublishiing.com</a>. Please include your TeamPulse ID so we can find your record.</p>
 
       <h2>Changes</h2>
       <p>If this notice changes in a way that matters, the new date will appear at the top of this page.</p>
