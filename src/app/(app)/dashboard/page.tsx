@@ -67,7 +67,7 @@ export default async function Dashboard() {
   const st = (id: string) => { const m = byId.get(id)!, s = stats.get(id); return monthStatus({ role: m.role, rank: m.rank, ppv: s?.ppv ?? null, qpv: s?.qpv ?? null }); };
   const qualified = active.filter((m) => st(m.id).state === "qualified").length;
   const titleOnly = active.filter((m) => { const s = st(m.id); return s.state === "title_only" && !s.noPpv; }).length;
-  const pending = active.filter((m) => st(m.id).state === "unreported").length; // nothing confirmed on the 28th/29th yet
+  const pending = active.filter((m) => st(m.id).state === "unreported").length; // nothing confirmed on the 28th yet
   const noBonus = active.length - qualified - titleOnly - pending; // confirmed under 100 PPV
   const feed = await db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
     select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 6`;

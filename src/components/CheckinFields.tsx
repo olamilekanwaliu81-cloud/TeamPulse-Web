@@ -32,12 +32,12 @@ export function PpvFields({ a }: { a: Record<string, unknown> }) {
       <div className="field"><label htmlFor="p-qpv">Team QPV you plan to reach this month</label>
         <div className="inline"><input id="p-qpv" name="qpv" type="number" min="0" defaultValue={n(a.qpv)} disabled={none} />
           <label className="inline" style={{ fontWeight: 400 }}><input name="none" type="checkbox" checked={none} onChange={(e) => setNone(e.target.checked)} /> None yet, I have no downline</label></div>
-        <span className="hint">If you have no downline, your QPV is just your PPV. We will ask you on the 29th if your team reached it.</span></div>
+        <span className="hint">If you have no downline, your QPV is just your PPV. We will ask you on the 28th if your team reached it.</span></div>
     </>
   );
 }
 
-/** The 28th and 29th. Said yes: the planned number is recorded. Said no: they type what they really did. */
+/** The 28th. Said yes: the planned number is recorded. Said no: they type what they really did. */
 export function ConfirmFields({ a, planned, what }: { a: Record<string, unknown>; planned: number | null; what: "PPV" | "QPV" }) {
   const [done, setDone] = useState<"yes" | "no" | "">(a.done === true ? "yes" : a.done === false ? "no" : "");
   const noPlan = planned == null;

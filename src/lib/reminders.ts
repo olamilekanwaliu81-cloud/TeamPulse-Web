@@ -13,7 +13,7 @@ async function once(userId: string, occ: string, kind: string): Promise<boolean>
 
 async function mailAbout(u: { name: string; email: string; id: string; teamId?: string }, o: Occ, kind: "open" | "last" | "nudge", today: Day, leaderName?: string) {
   const c = CI[o.key];
-  // The 28th and 29th questions repeat the number the member planned, so the question is personal.
+  // The 28th questions repeat the number the member planned, so the question is personal.
   const own = isConfirm(o.key) ? confirmCopy(o.key, (await pledgeOf(u.id, o.month))[o.key === "ppvdone" ? "ppv" : "qpv"]) : null;
   const body = own?.body ?? c.body;
   const lead = kind === "open" ? body

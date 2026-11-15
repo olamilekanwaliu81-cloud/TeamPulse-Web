@@ -98,8 +98,8 @@ A member who is inactive, has under 100 PPV, or reported no PPV after the PPV qu
 
 Each email sent through Resend carries a 1-pixel image (`/t/o/<id>`, counts an open) and its button goes through `/t/c/<id>` (counts the click, then redirects to the real link saved with the email, so it cannot send anyone elsewhere). The leader sees totals on the dashboard and details at `/emails`. Counts are stored in `mail_log` (migration 006). Opens are a guide only, because mail apps may hide or preload images; clicks are reliable. Set `EMAIL_TRACKING=0` to switch it off. No tracking company is involved.
 
-## Plans versus results (the 28th and 29th)
+## Plans versus results (the 28th)
 The 14th check-in records what a member **plans** to do (PPV and QPV). A plan never counts as done: it shows as "250 planned" and
-stays pending. On the **28th** every member gets a personal question ("Have you done the 250 PPV you planned?") and on the **29th**
+stays pending. On the **28th** every member gets a personal question ("Have you done the 250 PPV you planned?") and, the same day,
 the same for QPV. Yes records the planned number; No asks for the number they really did. Only these confirmed numbers feed ranks,
 qualification, system QPV and the dashboard. The windows never run past the last day of the month. Needs migration `007`.

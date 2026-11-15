@@ -19,7 +19,7 @@ export const CI: Record<Key, { d: number; day: string; title: string; subject: s
   signup: { d: 25, day: "25th", title: "Sign-ups and step-ups", subject: "Did you sign anyone this month?", body: "Tell us about new sign-ups, step-ups in your team and any tools you bought." },
   paid: { d: 28, day: "28th", title: "Monthly responsibility", subject: "Have you paid your monthly responsibility?", body: "One tap: yes or no." },
   ppvdone: { d: 28, day: "28th", title: "Confirm your PPV", subject: "Did you do the PPV you planned?", body: "Tell us whether you did the PPV you planned this month, or how many you really did.", monthEnd: true, openBefore: 0 },
-  qpvdone: { d: 29, day: "29th", title: "Confirm your QPV", subject: "Did your team reach the QPV you planned?", body: "Tell us whether you reached the QPV you planned this month, or how many you really reached.", monthEnd: true, openBefore: 0 },
+  qpvdone: { d: 28, day: "28th", title: "Confirm your QPV", subject: "Did your team reach the QPV you planned?", body: "Tell us whether you reached the QPV you planned this month, or how many you really reached.", monthEnd: true, openBefore: 0 },
 };
 
 /** The two end-of-month questions that confirm what was planned on the 14th. */
@@ -54,7 +54,7 @@ export function occurrence(key: Key, year: number, month: number): Occ {
   const first = new Date(Date.UTC(year, month, 1, 12)); // month may be -1 or 12: Date rolls the year
   const y = first.getUTCFullYear(), m = first.getUTCMonth();
   const last = new Date(Date.UTC(y, m + 1, 0, 12)).getUTCDate(); // 28 to 31
-  const date = ymd(y, m, Math.min(CI[key].d, last)); // the 29th of a short February becomes its last day
+  const date = ymd(y, m, Math.min(CI[key].d, last)); // a date past the month end becomes its last day
   const close = addDays(date, CLOSE_AFTER);
   return { key, id: `${key}@${date}`, date, open: addDays(date, -(CI[key].openBefore ?? OPEN_BEFORE)), close: CI[key].monthEnd && close > ymd(y, m, last) ? ymd(y, m, last) : close, month: ymd(y, m, 1) };
 }

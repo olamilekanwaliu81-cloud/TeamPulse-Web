@@ -6,7 +6,7 @@ import { MIN_PPV, effectiveSponsors, recommend, systemQpv } from "./ranks";
 import type { User } from "./users";
 
 export type Stat = {
-  /** PPV and QPV that were CONFIRMED on the 28th and 29th (or a first order). Null until then: a plan is not a result. */
+  /** PPV and QPV that were CONFIRMED on the 28th (or a first order). Null until then: a plan is not a result. */
   ppv: number | null; qpv: number | null;
   /** What they said on the 14th they would do. Shown as "planned" until confirmed. */
   ppvPlan: number | null; qpvPlan: number | null; sysQpv: number; earn: number | "none" | null; paid: boolean | null;

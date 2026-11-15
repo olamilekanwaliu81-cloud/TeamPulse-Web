@@ -22,7 +22,7 @@ export default async function Home() {
   const answered = new Set(mine.map((a) => a.occ));
   const since = realToday(u.joinedAt), pg = progress(answered, T, since);
   const occs = monthOccs(T);
-  // Only what was confirmed on the 28th and 29th counts. The plan from the 14th is shown beside it as "planned".
+  // Only what was confirmed on the 28th counts. The plan from the 14th is shown beside it as "planned".
   const stat = (await monthStats(u.teamId, all, T)).get(u.id);
   const ppv = stat?.ppv ?? null, qpv = stat?.qpv ?? null, ppvPlan = stat?.ppvPlan ?? null, qpvPlan = stat?.qpvPlan ?? null;
   const status = monthStatus({ role: u.role, rank: u.rank, ppv, qpv });
@@ -44,7 +44,7 @@ export default async function Home() {
         <StatCard icon="star" tone="blue" label="My title" value={rankName(u.rank)} note={u.rank >= 1 ? "Kept for good once earned" : "Your first title is Manager"} />
         <StatCard icon="circleCheck" tone={status.state === "qualified" ? "green" : status.state === "title_only" ? (status.noPpv ? "red" : "orange") : "purple"} label="This month" value={status.state === "qualified" ? "Qualified" : status.state === "title_only" ? (status.noPpv ? "No bonus" : "Title only") : ppvPlan != null ? "Pending" : "No PPV yet"} note={status.state === "qualified" ? (status.rate ? `Bonus level ${status.rate}%` : "You met this month's targets") : status.state === "title_only" ? (status.noPpv ? "Under 100 PPV" : status.rate ? `Earning ${status.rate}% this month` : "QPV under 250") : ppvPlan != null ? "Confirm it on the 28th" : "Answer the 14th check-in"} />
         <StatCard icon="bolt" tone="purple" label="My PPV" value={pvText(ppv, ppvPlan)} note={ppv == null && ppvPlan != null ? "Counts once you confirm it on the 28th" : "100 needed every month"} />
-        <StatCard icon="users" tone="orange" label="My team QPV" value={pvText(qpv, qpvPlan)} note={qpv == null && qpvPlan != null ? "Counts once you confirm it on the 29th" : u.rank >= 1 ? `${need.toLocaleString("en-US")} needed for ${rankName(u.rank)}` : "Includes your own PPV"} />
+        <StatCard icon="users" tone="orange" label="My team QPV" value={pvText(qpv, qpvPlan)} note={qpv == null && qpvPlan != null ? "Counts once you confirm it on the 28th" : u.rank >= 1 ? `${need.toLocaleString("en-US")} needed for ${rankName(u.rank)}` : "Includes your own PPV"} />
       </div>
 
       <div className={status.state === "qualified" ? "rule" : "notice bad"} role="status" style={status.state === "title_only" && !status.noPpv ? { background: "var(--orange-soft)", borderColor: "var(--orange)" } : status.state === "unreported" ? { background: "var(--accent-soft)", borderColor: "var(--accent)" } : undefined}>

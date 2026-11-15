@@ -51,7 +51,7 @@ function parse(key: Key, f: FormData): Parsed {
   return { answers: { su, count, steps, tools: raw(f, "tools") === "yes" ? "yes" : "no" } };
 }
 
-/** The 28th and 29th: "yes, I did what I planned" or the number they really did. Nothing counts until this is saved. */
+/** The 28th: "yes, I did what I planned" or the number they really did. Nothing counts until this is saved. */
 function parseConfirm(key: keyof typeof CONFIRM_OF, f: FormData, planned: number | null): Parsed {
   const w = CONFIRM_OF[key].toUpperCase(), v = raw(f, "done"), actual = num(f, "actual");
   if (Number.isNaN(actual)) return { error: "Use numbers only, with no minus sign." };
