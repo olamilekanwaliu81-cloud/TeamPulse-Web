@@ -7,7 +7,7 @@ import { monthStatus, statusText } from "@/lib/ranks";
 import { StatusPill } from "@/components/ui";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
-import { removeMember, resendInvite } from "@/app/actions/team";
+import { deactivateMember, reactivateMember, removeMember, resendInvite } from "@/app/actions/team";
 import { ActionForm } from "@/components/ActionForm";
 import { ResetPasswordButton } from "@/components/ResetPasswordButton";
 import { answersOf, summarize } from "@/lib/answers";
@@ -50,12 +50,16 @@ export default async function Member({ params }: { params: Promise<{ id: string 
         {m.status === "active" && (() => { const ms = monthStatus({ role: m.role, rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }), tx = statusText({ rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }, ms);
           return <p className="rule" style={{ marginTop: 14 }}><StatusPill s={ms} /> <b>{tx.headline}.</b> {tx.detail}</p>; })()}
         {m.bio && <p className="sub" style={{ marginTop: 14 }}>{m.bio}</p>}
-        {admin && m.id !== viewer.id && (
+        {admin && m.id !== viewer.id && (<>
           <div className="inline" style={{ marginTop: 18 }}>
             {m.status === "invited" && <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn primary" type="submit">Resend welcome email</button></form>}
             {m.status === "active" && <ResetPasswordButton memberId={m.id} />}
+            {m.role === "member" && m.status !== "inactive" && <form action={deactivateMember}><input type="hidden" name="id" value={m.id} /><button className="btn" type="submit">Make inactive</button></form>}
+            {m.role === "member" && m.status === "inactive" && <form action={reactivateMember}><input type="hidden" name="id" value={m.id} /><button className="btn primary" type="submit">Make active again</button></form>}
           </div>
-        )}
+          {m.role === "member" && m.status !== "inactive" && <p className="hint" style={{ marginTop: 8 }}>Making someone inactive stops them signing in and from getting check-in emails. Nothing is deleted and you can bring them back.</p>}
+          {m.role === "member" && m.status === "inactive" && <p className="hint" style={{ marginTop: 8 }}>This person cannot sign in and gets no check-in emails. Their records are kept.</p>}
+        </>)}
       </section>
       {admin && m.id !== viewer.id && m.role === "member" && (
         <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>

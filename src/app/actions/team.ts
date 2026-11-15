@@ -135,3 +135,23 @@ export async function removeMember(_: FormState, f: FormData): Promise<FormState
   revalidatePath("/", "layout");
   redirect("/team?removed=1");
 }
+
+/** The leader stops an inactive member signing in. Nothing is deleted, and it can be undone. */
+export async function deactivateMember(f: FormData) {
+  const leader = await requireAdmin();
+  const m = await ownMember(leader.teamId, text(f, "id"));
+  if (!m || m.id === leader.id || m.role !== "member" || m.status === "inactive") return;
+  await db()`update users set status = 'inactive' where id = ${m.id} and team_id = ${leader.teamId}`;
+  await logAudit(leader.teamId, leader.id, "member.deactivated", { tpId: m.tpId });
+  revalidatePath("/", "layout");
+}
+
+/** Brings an inactive member back. They are Active if they already had a login, otherwise Invited again. */
+export async function reactivateMember(f: FormData) {
+  const leader = await requireAdmin();
+  const m = await ownMember(leader.teamId, text(f, "id"));
+  if (!m || m.role !== "member" || m.status !== "inactive") return;
+  await db()`update users set status = case when pw_hash is null then 'invited' else 'active' end where id = ${m.id} and team_id = ${leader.teamId}`;
+  await logAudit(leader.teamId, leader.id, "member.reactivated", { tpId: m.tpId });
+  revalidatePath("/", "layout");
+}
