@@ -35,6 +35,10 @@ export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
 export const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 86_400_000);
 
+/** A volume figure for a table cell: the confirmed number, or the plan marked as planned, or a dash. */
+export const pvText = (confirmed: number | null | undefined, plan: number | null | undefined): string =>
+  confirmed != null ? confirmed.toLocaleString("en-US") : plan != null ? `${plan.toLocaleString("en-US")} planned` : "—";
+
 export const MAX_BULK = 25;
 
 /** Email addresses typed or pasted in one box, split on spaces, commas, semicolons and new lines. Duplicates are dropped. */

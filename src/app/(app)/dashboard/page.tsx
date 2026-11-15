@@ -5,7 +5,7 @@ import { TZ, realToday, today } from "@/lib/clock";
 import { answeredSets, dropOf, teamAnswers } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, monthOccs, parseDay, ymd } from "@/lib/checkins";
 import { teamMembers, teamName } from "@/lib/users";
-import { RANKS, firstName, rankName } from "@/lib/rules";
+import { RANKS, firstName, pvText, rankName } from "@/lib/rules";
 import { monthStatus } from "@/lib/ranks";
 import { ago } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
@@ -67,7 +67,8 @@ export default async function Dashboard() {
   const st = (id: string) => { const m = byId.get(id)!, s = stats.get(id); return monthStatus({ role: m.role, rank: m.rank, ppv: s?.ppv ?? null, qpv: s?.qpv ?? null }); };
   const qualified = active.filter((m) => st(m.id).state === "qualified").length;
   const titleOnly = active.filter((m) => { const s = st(m.id); return s.state === "title_only" && !s.noPpv; }).length;
-  const noBonus = active.length - qualified - titleOnly; // under 100 PPV, or no PPV yet
+  const pending = active.filter((m) => st(m.id).state === "unreported").length; // nothing confirmed on the 28th/29th yet
+  const noBonus = active.length - qualified - titleOnly - pending; // confirmed under 100 PPV
   const feed = await db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
     select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 6`;
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date()));
@@ -168,7 +169,7 @@ export default async function Dashboard() {
             </section>
             <section className="card c4"><PanelTitle>Team this month</PanelTitle>
               <Donut label="active members" total={active.length}
-                parts={[{ value: qualified, color: "var(--green)", label: "Qualified" }, { value: titleOnly, color: "var(--orange)", label: "Title only" }, { value: noBonus, color: "#F27A7A", label: "No bonus (PPV under 100 or none)" }]} />
+                parts={[{ value: qualified, color: "var(--green)", label: "Qualified" }, { value: titleOnly, color: "var(--orange)", label: "Title only" }, { value: noBonus, color: "#F27A7A", label: "No bonus (confirmed PPV under 100)" }, { value: pending, color: "var(--purple)", label: "Waiting for confirmation" }]} />
             </section>
             <section className="card c4"><PanelTitle>This week</PanelTitle><WeekPanel today={T} /></section>
           </div>
@@ -179,7 +180,7 @@ export default async function Dashboard() {
               {active.slice(0, 6).map((m) => (
                 <div className="mrow" key={m.id}>
                   <Avatar user={m} />
-                  <div className="grow"><b>{m.name}</b><small>{rankName(m.rank)} · {stats.get(m.id)?.ppv != null ? `${stats.get(m.id)!.ppv} PPV` : "no PPV yet"}</small></div>
+                  <div className="grow"><b>{m.name}</b><small>{rankName(m.rank)} · {stats.get(m.id)?.ppv != null ? `${stats.get(m.id)!.ppv} PPV` : stats.get(m.id)?.ppvPlan != null ? `${stats.get(m.id)!.ppvPlan} PPV planned` : "no PPV yet"}</small></div>
                   <StatusPill s={st(m.id)} />
                 </div>
               ))}
@@ -241,8 +242,8 @@ export default async function Dashboard() {
                   <td><Link className="who" href={`/team/${m.id}`} style={{ color: "inherit", textDecoration: "none" }}><Avatar user={m} /><div><div style={{ fontWeight: 700 }}>{m.name}</div><div className="mono sub">{m.tpId}</div></div></Link></td>
                   <td><span className={`pill ${m.rank >= 1 ? "acc" : ""}`}>{rankName(m.rank)}</span></td>
                   <td><StatusPill s={st(m.id)} /></td>
-                  <td className="num">{s.ppv ?? "—"}</td>
-                  <td className="num">{s.qpv?.toLocaleString("en-US") ?? "—"}</td>
+                  <td className="num">{pvText(s.ppv, s.ppvPlan)}</td>
+                  <td className="num">{pvText(s.qpv, s.qpvPlan)}</td>
                   <td className="num">{s.sysQpv.toLocaleString("en-US")}</td>
                   <td className="num">{s.earn === "none" ? "None yet" : typeof s.earn === "number" ? money(s.earn) : "—"}</td>
                   <td>{s.paid === true ? <span className="pill good">Paid</span> : s.paid === false ? <span className="pill bad">Not paid</span> : <span className="sub">—</span>}</td>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { rankName } from "@/lib/rules";
+import { pvText, rankName } from "@/lib/rules";
 import { monthStatus } from "@/lib/ranks";
 import { StatusPill } from "@/components/ui";
 import { scopeFor, teamMembers, teamName, type User } from "@/lib/users";
@@ -28,7 +28,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
   const treeMonth = (m: User): "qualified" | "title_only" | "no_bonus" | "unreported" => { const s = stOf(m); return s.state === "title_only" ? (s.noPpv ? "no_bonus" : "title_only") : s.state === "qualified" ? "qualified" : "unreported"; };
   const effOf = (m: User) => stats.get(m.id)?.effSponsor ?? m.sponsorId;
   const kids = (id: string) => list.filter((m) => effOf(m) === id);
-  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null, month: m.status === "active" ? treeMonth(m) : "unreported", children: kids(m.id).map(node) });
+  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, ppv: stats.get(m.id)?.ppv ?? null, ppvPlan: stats.get(m.id)?.ppvPlan ?? null, qpv: stats.get(m.id)?.qpv ?? null, month: m.status === "active" ? treeMonth(m) : "unreported", children: kids(m.id).map(node) });
   // people whose sponsor is outside the list hang directly under the viewer
   const top = list.filter((m) => { const s = effOf(m); return !s || !ids.has(s); });
   const root: TreeNode = { ...node(u), rank: u.role === "admin" ? "Team leader" : rankName(u.rank), children: top.map(node) };
@@ -67,8 +67,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
                     <td><span className={`pill ${m.rank >= 1 ? "acc" : ""}`}>{rankName(m.rank)}</span></td>
                     <td className="mono">{m.neoId}</td>
                     <td>{m.status === "active" ? <StatusPill s={stOf(m)} /> : <span className="sub">—</span>}</td>
-                    <td className="num">{stats.get(m.id)?.ppv ?? "—"}</td>
-                    <td className="num">{stats.get(m.id)?.qpv?.toLocaleString("en-US") ?? "—"}</td>
+                    <td className="num">{pvText(stats.get(m.id)?.ppv, stats.get(m.id)?.ppvPlan)}</td>
+                    <td className="num">{pvText(stats.get(m.id)?.qpv, stats.get(m.id)?.qpvPlan)}</td>
                     <td>{(m.sponsorId && byId.get(m.sponsorId)?.name) || "—"}</td>
                     <td>{m.joinedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
                   </tr>

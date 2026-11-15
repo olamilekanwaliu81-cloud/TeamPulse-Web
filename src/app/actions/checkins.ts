@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { today } from "@/lib/clock";
-import { saveAnswer } from "@/lib/answers";
-import { isKey, stateOf, type Key } from "@/lib/checkins";
+import { pledgeOf, saveAnswer } from "@/lib/answers";
+import { CONFIRM_OF, isConfirm, isKey, stateOf, type Key } from "@/lib/checkins";
 import { nudge } from "@/lib/reminders";
 import { userById } from "@/lib/users";
 import type { FormState } from "./auth";
@@ -51,6 +51,16 @@ function parse(key: Key, f: FormData): Parsed {
   return { answers: { su, count, steps, tools: raw(f, "tools") === "yes" ? "yes" : "no" } };
 }
 
+/** The 28th and 29th: "yes, I did what I planned" or the number they really did. Nothing counts until this is saved. */
+function parseConfirm(key: keyof typeof CONFIRM_OF, f: FormData, planned: number | null): Parsed {
+  const w = CONFIRM_OF[key].toUpperCase(), v = raw(f, "done"), actual = num(f, "actual");
+  if (Number.isNaN(actual)) return { error: "Use numbers only, with no minus sign." };
+  if (v === "yes" && planned != null) return { answers: { done: true, actual: planned, planned } };
+  if (v !== "yes" && v !== "no" && planned != null) return { error: `Choose yes, or enter the ${w} you really did.` };
+  if (actual === null) return { error: `Enter the ${w} you really did.` };
+  return { answers: { done: planned != null && actual === planned, actual, planned } };
+}
+
 /** A member answers an open check-in. They can change the answer until the window closes. */
 export async function saveCheckin(_: FormState, f: FormData): Promise<FormState> {
   const u = await requireUser();
@@ -59,7 +69,7 @@ export async function saveCheckin(_: FormState, f: FormData): Promise<FormState>
   if (!isKey(key)) return { error: "That check-in does not exist." };
   const s = stateOf(key, await today());
   if (s.state !== "open") return { error: "This check-in is not open." };
-  const p = parse(key, f);
+  const p = isConfirm(key) ? parseConfirm(key, f, (await pledgeOf(u.id, s.occ.month))[CONFIRM_OF[key]]) : parse(key, f);
   if ("error" in p) return p;
   await saveAnswer(u.id, u.teamId, s.occ.id, key, s.occ.month, p.answers);
   if (key === "signup") {
@@ -70,7 +80,7 @@ export async function saveCheckin(_: FormState, f: FormData): Promise<FormState>
     else await db()`update claims set state = 'dismissed', updated_at = now() where by_user = ${u.id} and occ = ${s.occ.id} and state = 'review'`;
   }
   revalidatePath("/", "layout");
-  return { ok: key === "ppv" && Number(p.answers.ppv) < 100 ? "Saved. Under 100 PPV, so you are Title only this month." : key === "ppv" ? "Saved. You meet the 100 PPV needed." : "Saved." };
+  return { ok: key === "ppv" ? "Saved as your plan. It counts only after you confirm it on the 28th." : isConfirm(key) ? `Saved. ${p.answers.actual} ${CONFIRM_OF[key].toUpperCase()} is recorded for this month.` : "Saved." };
 }
 
 export async function remindMember(f: FormData) {

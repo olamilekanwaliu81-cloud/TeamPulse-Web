@@ -8,7 +8,7 @@ export function kindOf(subject: string): Kind {
   if (s.startsWith("welcome")) return "Welcome";
   if (s.startsWith("reset your teampulse")) return "Password reset";
   if (s.startsWith("confirm your email")) return "Email confirmation";
-  if (s.startsWith("last day:") || s.startsWith("reminder:") || s.includes("your check-in is open")) return "Check-in reminders";
+  if (s.startsWith("last day:") || s.startsWith("reminder:") || s.includes("your check-in is open") || s.includes("you planned") || /^how much (ppv|qpv) did you (do|reach)/.test(s)) return "Check-in reminders";
   if (s.includes("invites you")) return "Invites";
   if (s.includes("needs your new sign-up")) return "Sign-up requests";
   return "Other";

@@ -33,6 +33,13 @@ export async function saveAnswer(userId: string, teamId: string, occ: string, ke
              on conflict (user_id, occ) do update set answers = excluded.answers, updated_at = now()`;
 }
 
+/** What a member said on the 14th they would do this month. It is a plan, not a result. */
+export async function pledgeOf(userId: string, month: Day): Promise<{ ppv: number | null; qpv: number | null }> {
+  const r = await db()<{ answers: Record<string, unknown> }[]>`select answers from checkin_answers where user_id = ${userId} and key = 'ppv' and month = ${month}`;
+  const a = r[0]?.answers;
+  return { ppv: typeof a?.ppv === "number" ? a.ppv : null, qpv: typeof a?.qpv === "number" ? a.qpv : null };
+}
+
 /** Money that has been reported as on its way, with the date it lands, from earn answers. */
 export function dropOf(a: Answer): { amount: number; date: Day } | null {
   if (a.key !== "earn") return null;
@@ -50,7 +57,11 @@ export function summarize(a: Answer): string {
   const x = a.answers;
   switch (a.key) {
     case "earn": return `Made ${x.earn === "none" ? "nothing yet" : usd(x.earn)} · ${x.orders ?? 0} active orders · ${x.delivered ?? 0} delivered${Number(x.drop) > 0 ? ` · ${usd(x.drop)} dropping on ${x.clears}` : ""}`;
-    case "ppv": return `PPV ${x.ppv} · QPV ${x.qpv}`;
+    case "ppv": return `Plans ${x.ppv} PPV · ${x.qpv} QPV (not done yet)`;
+    case "ppvdone": case "qpvdone": {
+      const w = a.key === "ppvdone" ? "PPV" : "QPV", n = Number(x.actual), p = typeof x.planned === "number" ? x.planned : null;
+      return x.done ? `Confirmed: did the ${n} ${w}${p == null ? "" : " planned"}` : `Did ${n} ${w}${p == null ? "" : ` instead of the ${p} planned`}`;
+    }
     case "plan": return `${Array.isArray(x.goals) ? (x.goals as string[][]).map((g) => `${g[0]} ${g[1]}`).join("; ") : ""}${x.signups ? ` · sign ${x.signups}` : ""} · aiming for ${x.target}`;
     case "paid": return x.paid ? "Paid the monthly responsibility" : "Has not paid the monthly responsibility";
     case "signup": return `${x.su === "yes" ? `Signed ${x.count}` : "No sign-ups"} · step-ups ${Array.isArray(x.steps) ? (x.steps as number[]).join("/") : "0/0/0/0"} · tools ${x.tools}`;

@@ -26,13 +26,41 @@ export function PpvFields({ a }: { a: Record<string, unknown> }) {
   const v = ppv === "" ? null : Number(ppv);
   return (
     <>
-      <div className="field"><label htmlFor="p-ppv">Your PPV this month</label>
+      <div className="field"><label htmlFor="p-ppv">PPV you plan to do this month</label>
         <input id="p-ppv" name="ppv" type="number" min="0" value={ppv} onChange={(e) => setPpv(e.target.value)} />
-        <span className={`hint ${v == null ? "" : v < 100 ? "bad" : "good"}`}>{v == null ? "NeoLife asks for 100 PPV to stay active." : v < 100 ? `${v} PPV is under the 100 needed. You would be "Title only" this month, with no bonus.` : `${v} PPV. You meet the 100 needed.`}</span></div>
-      <div className="field"><label htmlFor="p-qpv">Your team&apos;s QPV</label>
+        <span className={`hint ${v == null ? "" : v < 100 ? "bad" : "good"}`}>{v == null ? "NeoLife asks for 100 PPV to stay active. This is your plan: we will ask you on the 28th if you did it." : v < 100 ? `${v} PPV is under the 100 needed. You would be "Title only" this month, with no bonus.` : `${v} PPV. You meet the 100 needed.`}</span></div>
+      <div className="field"><label htmlFor="p-qpv">Team QPV you plan to reach this month</label>
         <div className="inline"><input id="p-qpv" name="qpv" type="number" min="0" defaultValue={n(a.qpv)} disabled={none} />
           <label className="inline" style={{ fontWeight: 400 }}><input name="none" type="checkbox" checked={none} onChange={(e) => setNone(e.target.checked)} /> None yet, I have no downline</label></div>
-        <span className="hint">If you have no downline, your QPV is just your PPV.</span></div>
+        <span className="hint">If you have no downline, your QPV is just your PPV. We will ask you on the 29th if your team reached it.</span></div>
+    </>
+  );
+}
+
+/** The 28th and 29th. Said yes: the planned number is recorded. Said no: they type what they really did. */
+export function ConfirmFields({ a, planned, what }: { a: Record<string, unknown>; planned: number | null; what: "PPV" | "QPV" }) {
+  const [done, setDone] = useState<"yes" | "no" | "">(a.done === true ? "yes" : a.done === false ? "no" : "");
+  const noPlan = planned == null;
+  return (
+    <>
+      {noPlan ? (
+        <div className="field"><label htmlFor="c-act">How many {what} did you really do this month?</label>
+          <input id="c-act" name="actual" type="number" min="0" defaultValue={n(a.actual)} />
+          <span className="hint">You did not give a {what} plan on the 14th, so just tell us the number.</span></div>
+      ) : (
+        <>
+          <div className="lbl" style={{ marginBottom: 8 }}>{what === "QPV" ? "Has your team reached" : "Have you done"} the {planned.toLocaleString("en-US")} {what} you said {what === "QPV" ? "it would reach" : "you would do"}?</div>
+          <div className="yn" style={{ marginBottom: 14 }}>
+            <label><input type="radio" name="done" value="yes" checked={done === "yes"} onChange={() => setDone("yes")} /> {what === "QPV" ? "Yes, we reached" : "Yes, I did"} {planned.toLocaleString("en-US")} {what}</label>
+            <label><input type="radio" name="done" value="no" checked={done === "no"} onChange={() => setDone("no")} /> No, it was a different number</label>
+          </div>
+          {done === "no" && (
+            <div className="field"><label htmlFor="c-act">How many {what} did you really do?</label>
+              <input id="c-act" name="actual" type="number" min="0" defaultValue={typeof a.actual === "number" && a.done === false ? a.actual : ""} />
+              <span className="hint">Only the number you enter here is counted.</span></div>
+          )}
+        </>
+      )}
     </>
   );
 }

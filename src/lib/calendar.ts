@@ -65,5 +65,5 @@ export function upcoming(today: Day, days = 14): { occ: Occ; what: "opens" | "du
   return out.sort((a, b) => (a.on < b.on ? -1 : a.on > b.on ? 1 : 0));
 }
 
-export const KEY_COLOR: Record<Key, string> = { earn: "var(--green)", ppv: "var(--accent)", plan: "var(--purple)", signup: "var(--orange)", paid: "var(--red)" };
+export const KEY_COLOR: Record<Key, string> = { earn: "var(--green)", ppv: "var(--accent)", plan: "var(--purple)", signup: "var(--orange)", paid: "var(--red)", ppvdone: "var(--accent-deep)", qpvdone: "var(--teal)" };
 export const title = (k: Key) => CI[k].title;

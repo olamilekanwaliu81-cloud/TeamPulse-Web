@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { today } from "@/lib/clock";
-import { answersOf } from "@/lib/answers";
+import { answersOf, pledgeOf } from "@/lib/answers";
 import { realToday } from "@/lib/clock";
-import { CI, KEYS, OPEN_BEFORE, CLOSE_AFTER, dmyDay, isKey, monthLabel, parseDay, stateOf, type Key } from "@/lib/checkins";
+import { CI, CONFIRM_OF, KEYS, OPEN_BEFORE, CLOSE_AFTER, confirmCopy, dmyDay, isConfirm, isKey, monthLabel, parseDay, stateOf, type Key } from "@/lib/checkins";
 import { firstName } from "@/lib/rules";
 import { ActionForm } from "@/components/ActionForm";
-import { EarnFields, PpvFields, PlanFields } from "@/components/CheckinFields";
+import { ConfirmFields, EarnFields, PpvFields, PlanFields } from "@/components/CheckinFields";
 import { saveCheckin } from "@/app/actions/checkins";
 import Link from "next/link";
 
@@ -24,6 +24,8 @@ export default async function Checkins({ searchParams }: { searchParams: Promise
   const key: Key = isKey(wanted) ? wanted : (firstOpen ?? KEYS[0]);
   const c = CI[key], st = states[key];
   const a = st.state === "open" ? byOcc.get(st.occ.id)?.answers ?? {} : {};
+  const planned = st.state === "open" && isConfirm(key) ? (await pledgeOf(u.id, st.occ.month))[CONFIRM_OF[key]] : null;
+  const copy = isConfirm(key) ? confirmCopy(key, planned) : { subject: c.subject, body: c.body };
   const since = realToday(u.joinedAt);
   const lastMissed = st.state === "locked" && st.last && st.last.close >= since && !byOcc.has(st.last.id);
 
@@ -50,21 +52,22 @@ export default async function Checkins({ searchParams }: { searchParams: Promise
             <div className="mail">
               <div className="meta">Question date: the {c.day}</div>
               <div className="subj">{c.title} is not open yet</div>
-              <p>This check-in opens on <b>{dmyDay(st.next.open)}</b>, {OPEN_BEFORE} days before the {c.day}. You can answer until <b>{dmyDay(st.next.close)}</b>, {CLOSE_AFTER} days after.</p>
+              <p>This check-in opens on <b>{dmyDay(st.next.open)}</b>{st.next.open === st.next.date ? ` (the ${c.day})` : `, ${OPEN_BEFORE} days before the ${c.day}`}. You can answer until <b>{dmyDay(st.next.close)}</b>{c.monthEnd ? ", the end of the month" : `, ${CLOSE_AFTER} days after`}.</p>
               {lastMissed && st.last && <p style={{ color: "var(--bad)" }}>The last one ({dmyDay(st.last.date)}) closed on {dmyDay(st.last.close)} without an answer.</p>}
             </div>
           ) : (
             <>
               <div className="mail">
                 <div className="meta">{c.title} · open {dmyDay(st.occ.open)} to {dmyDay(st.occ.close)}</div>
-                <div className="subj">{c.subject}</div>
-                <p>Hi {firstName(u.name)}, {c.body}</p>
+                <div className="subj">{copy.subject}</div>
+                <p>Hi {firstName(u.name)}, {copy.body}</p>
                 <p className="meta">It takes about two minutes. Your answer counts for the {c.day}, even if you send it a few days late (until {dmyDay(st.occ.close)}).</p>
               </div>
               <ActionForm key={st.occ.id} action={saveCheckin} submit={key === "plan" ? "Save my plan" : "Save my answers"}>
                 <input type="hidden" name="key" value={key} />
                 {key === "earn" && <EarnFields a={a} />}
                 {key === "ppv" && <PpvFields a={a} />}
+                {isConfirm(key) && <ConfirmFields key={st.occ.id} a={a} planned={planned} what={CONFIRM_OF[key].toUpperCase() as "PPV" | "QPV"} />}
                 {key === "plan" && <PlanFields a={a} monthName={monthLabel(parseDay(st.occ.date).y, parseDay(st.occ.date).m + 1)} />}
                 {key === "paid" && (
                   <>

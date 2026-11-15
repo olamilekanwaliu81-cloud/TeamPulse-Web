@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { teamMembers } from "@/lib/users";
-import { rankName, initials, PASSWORD_RULE } from "@/lib/rules";
+import { rankName, initials, pvText, PASSWORD_RULE } from "@/lib/rules";
 import { nextRank } from "@/lib/ranks";
 import { rankHistory, monthStats } from "@/lib/stats";
 import { today } from "@/lib/clock";
@@ -42,7 +42,7 @@ export default async function Profile() {
         {u.role === "member" && (
           <section className="card">
             <h3>My progress</h3>
-            <div className="kv"><div><div className="k">Rank</div><div className="v">{rankName(u.rank)}</div></div><div><div className="k">PPV</div><div className="v">{stat?.ppv ?? "—"}</div></div><div><div className="k">QPV</div><div className="v">{stat?.qpv?.toLocaleString("en-US") ?? "—"}</div></div></div>
+            <div className="kv"><div><div className="k">Rank</div><div className="v">{rankName(u.rank)}</div></div><div><div className="k">PPV</div><div className="v">{pvText(stat?.ppv, stat?.ppvPlan)}</div></div><div><div className="k">QPV</div><div className="v">{pvText(stat?.qpv, stat?.qpvPlan)}</div></div></div>
             {next ? <><div className="sub">Next: {next.name} at {next.qpv.toLocaleString("en-US")} QPV with 100 PPV</div><div className="meter"><i style={{ width: `${pct}%` }} /></div><div className="sub">{pct}% of the way</div></> : <div className="sub">Director follows its own rules.</div>}
             <h3 style={{ marginTop: 16 }}>Rank history</h3>
             {ranks.length ? <div className="rows">{ranks.map((r) => <div className="row" key={r.id}><div className="grow">{rankName(r.from)} to <b>{rankName(r.to)}</b></div><span className="sub">{dmy(r.at)}</span></div>)}</div> : <p className="sub">No rank changes yet.</p>}

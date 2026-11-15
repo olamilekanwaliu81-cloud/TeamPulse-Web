@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { scopeFor, teamMembers, userById } from "@/lib/users";
-import { rankName } from "@/lib/rules";
+import { pvText, rankName } from "@/lib/rules";
 import { monthStatus, statusText } from "@/lib/ranks";
 import { StatusPill } from "@/components/ui";
 import { dmy } from "@/lib/format";
@@ -41,8 +41,8 @@ export default async function Member({ params }: { params: Promise<{ id: string 
           <div><div className="k">Sponsor</div><div className="v">{sponsor?.name ?? "—"}</div></div>
           <div><div className="k">Joined</div><div className="v">{dmy(m.joinedAt)}</div></div>
           <div><div className="k">First order</div><div className="v">{m.firstPv != null ? `${m.firstPv} PV` : "—"}</div></div>
-          <div><div className="k">PPV this month</div><div className="v">{stat?.ppv ?? "—"}</div></div>
-          <div><div className="k">QPV reported / system</div><div className="v">{stat?.qpv?.toLocaleString("en-US") ?? "—"} / {(stat?.sysQpv ?? 0).toLocaleString("en-US")}</div></div>
+          <div><div className="k">PPV this month</div><div className="v">{pvText(stat?.ppv, stat?.ppvPlan)}</div></div>
+          <div><div className="k">QPV confirmed / system</div><div className="v">{pvText(stat?.qpv, stat?.qpvPlan)} / {(stat?.sysQpv ?? 0).toLocaleString("en-US")}</div></div>
           <div><div className="k">City</div><div className="v">{m.city || "—"}</div></div>
           {admin && <div><div className="k">Email</div><div className="v">{m.email}</div></div>}
           {admin && <div><div className="k">Phone</div><div className="v">{m.phone || "—"}</div></div>}

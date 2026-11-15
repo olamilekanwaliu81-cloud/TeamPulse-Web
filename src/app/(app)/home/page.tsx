@@ -4,7 +4,8 @@ import { TZ, realToday, today } from "@/lib/clock";
 import { answersOf, dropOf } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, monthOccs, parseDay, progress, stateOf } from "@/lib/checkins";
 import { teamMembers, teamName } from "@/lib/users";
-import { RANKS, firstName, rankName } from "@/lib/rules";
+import { monthStats } from "@/lib/stats";
+import { RANKS, firstName, pvText, rankName } from "@/lib/rules";
 import { monthStatus, nextRank, statusText } from "@/lib/ranks";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
@@ -21,10 +22,11 @@ export default async function Home() {
   const answered = new Set(mine.map((a) => a.occ));
   const since = realToday(u.joinedAt), pg = progress(answered, T, since);
   const occs = monthOccs(T);
-  const ppvAns = mine.find((a) => a.occ === occs.find((o) => o.key === "ppv")!.id)?.answers;
-  const ppv = typeof ppvAns?.ppv === "number" ? ppvAns.ppv : null, qpv = typeof ppvAns?.qpv === "number" ? ppvAns.qpv : null;
+  // Only what was confirmed on the 28th and 29th counts. The plan from the 14th is shown beside it as "planned".
+  const stat = (await monthStats(u.teamId, all, T)).get(u.id);
+  const ppv = stat?.ppv ?? null, qpv = stat?.qpv ?? null, ppvPlan = stat?.ppvPlan ?? null, qpvPlan = stat?.qpvPlan ?? null;
   const status = monthStatus({ role: u.role, rank: u.rank, ppv, qpv });
-  const tx = statusText({ rank: u.rank, ppv, qpv }, status);
+  const tx = statusText({ rank: u.rank, ppv, qpv }, status, ppvPlan);
   const next = nextRank(u.rank), need = RANKS[u.rank].qpv;
   const pctN = next && qpv != null ? Math.min(100, Math.round((qpv / next.qpv) * 100)) : 0;
   const drop = mine.map(dropOf).filter((d): d is NonNullable<typeof d> => !!d && d.date >= T).sort((a, b) => (a.date < b.date ? -1 : 1))[0];
@@ -40,9 +42,9 @@ export default async function Home() {
 
       <div className="statrow">
         <StatCard icon="star" tone="blue" label="My title" value={rankName(u.rank)} note={u.rank >= 1 ? "Kept for good once earned" : "Your first title is Manager"} />
-        <StatCard icon="circleCheck" tone={status.state === "qualified" ? "green" : status.state === "title_only" ? (status.noPpv ? "red" : "orange") : "purple"} label="This month" value={status.state === "qualified" ? "Qualified" : status.state === "title_only" ? (status.noPpv ? "No bonus" : "Title only") : "No PPV yet"} note={status.state === "qualified" ? (status.rate ? `Bonus level ${status.rate}%` : "You met this month's targets") : status.state === "title_only" ? (status.noPpv ? "Under 100 PPV" : status.rate ? `Earning ${status.rate}% this month` : "QPV under 250") : "Answer the 14th check-in"} />
-        <StatCard icon="bolt" tone="purple" label="My PPV" value={ppv == null ? "—" : ppv.toLocaleString("en-US")} note="100 needed every month" />
-        <StatCard icon="users" tone="orange" label="My team QPV" value={qpv == null ? "—" : qpv.toLocaleString("en-US")} note={u.rank >= 1 ? `${need.toLocaleString("en-US")} needed for ${rankName(u.rank)}` : "Includes your own PPV"} />
+        <StatCard icon="circleCheck" tone={status.state === "qualified" ? "green" : status.state === "title_only" ? (status.noPpv ? "red" : "orange") : "purple"} label="This month" value={status.state === "qualified" ? "Qualified" : status.state === "title_only" ? (status.noPpv ? "No bonus" : "Title only") : ppvPlan != null ? "Pending" : "No PPV yet"} note={status.state === "qualified" ? (status.rate ? `Bonus level ${status.rate}%` : "You met this month's targets") : status.state === "title_only" ? (status.noPpv ? "Under 100 PPV" : status.rate ? `Earning ${status.rate}% this month` : "QPV under 250") : ppvPlan != null ? "Confirm it on the 28th" : "Answer the 14th check-in"} />
+        <StatCard icon="bolt" tone="purple" label="My PPV" value={pvText(ppv, ppvPlan)} note={ppv == null && ppvPlan != null ? "Counts once you confirm it on the 28th" : "100 needed every month"} />
+        <StatCard icon="users" tone="orange" label="My team QPV" value={pvText(qpv, qpvPlan)} note={qpv == null && qpvPlan != null ? "Counts once you confirm it on the 29th" : u.rank >= 1 ? `${need.toLocaleString("en-US")} needed for ${rankName(u.rank)}` : "Includes your own PPV"} />
       </div>
 
       <div className={status.state === "qualified" ? "rule" : "notice bad"} role="status" style={status.state === "title_only" && !status.noPpv ? { background: "var(--orange-soft)", borderColor: "var(--orange)" } : status.state === "unreported" ? { background: "var(--accent-soft)", borderColor: "var(--accent)" } : undefined}>

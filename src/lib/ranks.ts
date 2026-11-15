@@ -100,11 +100,13 @@ export function monthStatus(p: { role: string; rank: number; ppv: number | null;
 export type StatusText = { headline: string; detail: string; tone: "good" | "warn" | "bad" | "info" };
 
 /** What a member's month means, in plain words. */
-export function statusText(p: { rank: number; ppv: number | null; qpv: number | null }, s: MonthStatus): StatusText {
+export function statusText(p: { rank: number; ppv: number | null; qpv: number | null }, s: MonthStatus, planned: number | null = null): StatusText {
   const name = RANKS[Math.min(p.rank, RANKS.length - 1)].name, need = RANKS[Math.min(p.rank, RANKS.length - 1)].qpv.toLocaleString("en-US");
   const keep = p.rank >= 1 ? ` You keep your ${name} title.` : "";
   if (s.state === "unreported")
-    return { tone: "info", headline: "No PPV reported yet", detail: `Without PPV this month you do not qualify as a Distributor and earn nothing.${keep}` };
+    return planned != null
+      ? { tone: "info", headline: `Planned ${planned.toLocaleString("en-US")} PPV, not done yet`, detail: `It counts only after you confirm on the 28th that you did it. Until then this month is pending.${keep}` }
+      : { tone: "info", headline: "No PPV yet", detail: `Without PPV this month you do not qualify as a Distributor and earn nothing.${keep}` };
   if (s.state === "qualified")
     return { tone: "good", headline: p.rank >= 1 ? `Qualified ${name}` : "Qualified Distributor",
       detail: `You have 100+ PPV${p.rank >= 1 ? ` and ${need}+ QPV` : ""}. ${s.rate ? `Your bonus level this month is ${s.rate}%.` : "The bonus starts at 250 QPV (3%)."}` };

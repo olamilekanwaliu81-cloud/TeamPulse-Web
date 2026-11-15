@@ -2,7 +2,8 @@ import { db } from "./db";
 import { appUrl, sendMail } from "./mail";
 import { esc } from "./emails";
 import { firstName } from "./rules";
-import { CI, KEYS, dmyDay, stateOf, type Day, type Occ } from "./checkins";
+import { CI, KEYS, confirmCopy, dmyDay, isConfirm, stateOf, type Day, type Occ } from "./checkins";
+import { pledgeOf } from "./answers";
 import { toUser, type UserRow } from "./users";
 
 async function once(userId: string, occ: string, kind: string): Promise<boolean> {
@@ -12,12 +13,16 @@ async function once(userId: string, occ: string, kind: string): Promise<boolean>
 
 async function mailAbout(u: { name: string; email: string; id: string; teamId?: string }, o: Occ, kind: "open" | "last" | "nudge", today: Day, leaderName?: string) {
   const c = CI[o.key];
-  const lead = kind === "open" ? c.body
-    : kind === "last" ? `Today is the last day to answer: ${c.body}`
-    : `${leaderName ?? "Your team leader"} is waiting for your answer. ${c.body}`;
+  // The 28th and 29th questions repeat the number the member planned, so the question is personal.
+  const own = isConfirm(o.key) ? confirmCopy(o.key, (await pledgeOf(u.id, o.month))[o.key === "ppvdone" ? "ppv" : "qpv"]) : null;
+  const body = own?.body ?? c.body;
+  const lead = kind === "open" ? body
+    : kind === "last" ? `Today is the last day to answer: ${body}`
+    : `${leaderName ?? "Your team leader"} is waiting for your answer. ${body}`;
   await sendMail({
     to: u.email, name: u.name, teamId: u.teamId,
-    subject: kind === "open" ? `${c.title}: your check-in is open` : kind === "last" ? `Last day: ${c.title}` : `Reminder: ${c.title}`,
+    subject: own ? (kind === "open" ? own.subject : kind === "last" ? `Last day: ${own.subject}` : `Reminder: ${own.subject}`)
+      : kind === "open" ? `${c.title}: your check-in is open` : kind === "last" ? `Last day: ${c.title}` : `Reminder: ${c.title}`,
     html: `<p>Hi ${esc(firstName(u.name))}, ${esc(lead)}</p><p>It takes about two minutes. You can answer until ${esc(dmyDay(o.close))}.</p>`,
     ctaLabel: "Answer now", ctaUrl: `${appUrl()}/checkins?key=${o.key}`,
   });

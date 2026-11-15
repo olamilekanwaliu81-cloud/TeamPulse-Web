@@ -5,6 +5,8 @@ describe("mail kinds", () => {
   it("recognises each email by its subject", () => {
     expect(kindOf("Welcome to the family, Ada! Your TeamPulse ID is 06OW111")).toBe("Welcome");
     expect(kindOf("Welcome to TeamPulse, Ada! Your TeamPulse ID is 06OW111")).toBe("Welcome");
+    expect(kindOf("Have you done the 250 PPV you planned?")).toBe("Check-in reminders");
+    expect(kindOf("Reminder: Have you done the 136 PPV you planned?")).toBe("Check-in reminders");
     expect(kindOf("Reset your TeamPulse password")).toBe("Password reset");
     expect(kindOf("Confirm your email for TeamPulse")).toBe("Email confirmation");
     expect(kindOf("PPV and QPV: your check-in is open")).toBe("Check-in reminders");
