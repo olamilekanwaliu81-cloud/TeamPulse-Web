@@ -88,4 +88,4 @@ Never commit `.env.local`. Keys go only into Supabase, Resend and Vercel.
 
 ## Sign-up links
 
-A team leader can make a sign-up link on the Sign-ups page (`/signups`). The new person fills in the form at `/join/<token>`; it lands in "Forms from new people". The leader checks it, **chooses the sponsor** (the form never decides it) and registers them, which sends the welcome email. Links expire after 14 days and can be turned off. Tables: `invites`, `applications` (migration 004; run `npm run db:migrate`).
+A team leader can make a sign-up link on the Sign-ups page (`/signups`). The new person fills in the form at `/join/<token>`; it lands in "Forms from new people". The leader checks it, **chooses the sponsor** (the form never decides it) and registers them, which sends the welcome email. Links expire after 14 days and can be turned off. A link is either for a **new sign-up** (asks for the first order PV) or for an **existing distributor** (asks for their current title instead; the leader confirms it when registering). Tables: `invites`, `applications` (migrations 004 and 005; run `npm run db:migrate`).

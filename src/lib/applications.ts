@@ -1,14 +1,15 @@
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
 
-export type Invite = { id: string; teamId: string; token: string; sponsorId: string | null; note: string; expiresAt: Date; revoked: boolean; createdAt: Date };
-export type Application = { id: string; teamId: string; inviteId: string | null; name: string; email: string; phone: string; neoId: string; firstPv: number; state: "new" | "added" | "dismissed"; createdAt: Date };
+export type Kind = "new" | "existing";
+export type Invite = { kind: Kind; id: string; teamId: string; token: string; sponsorId: string | null; note: string; expiresAt: Date; revoked: boolean; createdAt: Date };
+export type Application = { kind: Kind; claimedRank: number; id: string; teamId: string; inviteId: string | null; name: string; email: string; phone: string; neoId: string; firstPv: number | null; state: "new" | "added" | "dismissed"; createdAt: Date };
 
-type InviteRow = { id: string; team_id: string; token: string; sponsor_id: string | null; note: string; expires_at: Date; revoked: boolean; created_at: Date };
-type AppRow = { id: string; team_id: string; invite_id: string | null; name: string; email: string; phone: string; neo_id: string; first_pv: number; state: Application["state"]; created_at: Date };
+type InviteRow = { kind: Kind; id: string; team_id: string; token: string; sponsor_id: string | null; note: string; expires_at: Date; revoked: boolean; created_at: Date };
+type AppRow = { kind: Kind; claimed_rank: number; id: string; team_id: string; invite_id: string | null; name: string; email: string; phone: string; neo_id: string; first_pv: number | null; state: Application["state"]; created_at: Date };
 
-const toInvite = (r: InviteRow): Invite => ({ id: r.id, teamId: r.team_id, token: r.token, sponsorId: r.sponsor_id, note: r.note, expiresAt: r.expires_at, revoked: r.revoked, createdAt: r.created_at });
-const toApp = (r: AppRow): Application => ({ id: r.id, teamId: r.team_id, inviteId: r.invite_id, name: r.name, email: r.email, phone: r.phone, neoId: r.neo_id, firstPv: r.first_pv, state: r.state, createdAt: r.created_at });
+const toInvite = (r: InviteRow): Invite => ({ kind: r.kind, id: r.id, teamId: r.team_id, token: r.token, sponsorId: r.sponsor_id, note: r.note, expiresAt: r.expires_at, revoked: r.revoked, createdAt: r.created_at });
+const toApp = (r: AppRow): Application => ({ kind: r.kind, claimedRank: r.claimed_rank, id: r.id, teamId: r.team_id, inviteId: r.invite_id, name: r.name, email: r.email, phone: r.phone, neoId: r.neo_id, firstPv: r.first_pv, state: r.state, createdAt: r.created_at });
 
 export const INVITE_DAYS = 14;
 export const newInviteToken = () => randomBytes(24).toString("base64url");

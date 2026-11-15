@@ -19,8 +19,12 @@ export async function sendWelcomeEmail(member: User, sponsor: User): Promise<Mai
   const site = appUrl();
   return sendMail({
     to: member.email, name: member.name,
-    subject: `Welcome to the family, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`,
-    html: `<p>Congratulations, ${esc(firstName(member.name))}, and welcome to the family! ${esc(sponsor.name)} is proud of you for stepping up and joining the business. Your first order of ${member.firstPv ?? 0} PV makes you a NeoLife Distributor today.</p>
+    subject: member.firstPv == null
+      ? `Welcome to TeamPulse, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`
+      : `Welcome to the family, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`,
+    html: `${member.firstPv == null
+      ? `<p>Welcome to TeamPulse, ${esc(firstName(member.name))}! ${esc(sponsor.name)} has added you to the team's check-in system. Your details are in, and every month you will answer a few short check-ins here.</p>`
+      : `<p>Congratulations, ${esc(firstName(member.name))}, and welcome to the family! ${esc(sponsor.name)} is proud of you for stepping up and joining the business. Your first order of ${member.firstPv} PV makes you a NeoLife Distributor today.</p>`}
     <p style="margin:18px 0 4px">Your TeamPulse ID</p>
     <p style="font-size:26px;font-weight:700;letter-spacing:.06em;margin:0 0 6px;font-family:ui-monospace,Menlo,monospace">${esc(member.tpId)}</p>
     <p style="margin:0 0 14px">Your team website: <b>${esc(site)}</b></p>

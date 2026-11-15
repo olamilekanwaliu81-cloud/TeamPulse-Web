@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { sendResetEmail, sendWelcomeEmail } from "@/lib/emails";
 import { logAudit, userById } from "@/lib/users";
-import { validEmail, validNeoId, strongPassword, firstName } from "@/lib/rules";
+import { RANKS, validEmail, validNeoId, strongPassword, firstName } from "@/lib/rules";
+import { applicationById } from "@/lib/applications";
 import { mailProblem, notDelivered } from "@/lib/mail";
 import { freshTpId, type FormState } from "./auth";
 import bcrypt from "bcryptjs";
@@ -18,11 +19,16 @@ export async function addMember(_: FormState, f: FormData): Promise<FormState> {
   const leader = await requireAdmin();
   const name = text(f, "name"), email = text(f, "email"), phone = text(f, "phone").slice(0, 40), neo = text(f, "neo");
   const pv = Number(text(f, "pv")), appId = text(f, "app"), sponsorId = text(f, "sponsor") || (appId ? "" : leader.id);
+  const app = appId ? await applicationById(appId) : null;
+  if (appId && (!app || app.teamId !== leader.teamId || app.state !== "new")) return { error: "This form is no longer waiting. Go back to Sign-ups." };
+  const existing = app?.kind === "existing";
+  const rank = existing ? Number(text(f, "rank")) : 0;
+  if (existing && !(Number.isInteger(rank) && rank >= 0 && rank < RANKS.length)) return { error: "Choose their title." };
   if (appId && !sponsorId) return { error: "Choose who sponsors this person." };
   if (name.length < 2) return { error: "Enter the member's full name." };
   if (!validEmail(email)) return { error: "Enter a valid email address. The welcome message goes there." };
   if (!validNeoId(neo)) return { error: "NeoLife ID must look like 063-9262173." };
-  if (!Number.isFinite(pv) || pv < 0 || pv > 100000) return { error: "Enter the PV of the first order, for example 136." };
+  if (!existing && (!Number.isFinite(pv) || pv < 0 || pv > 100000)) return { error: "Enter the PV of the first order, for example 136." };
   const sql = db();
   if ((await sql`select 1 from users where neo_id = ${neo}`).length) return { error: "That NeoLife ID is already on a member." };
   if ((await sql`select 1 from users where lower(email) = ${email.toLowerCase()}`).length) return { error: "That email already has an account." };
@@ -30,8 +36,9 @@ export async function addMember(_: FormState, f: FormData): Promise<FormState> {
   if (!sponsor || sponsor.teamId !== leader.teamId || sponsor.status === "inactive") return { error: "Choose a sponsor from your team." };
   const tpId = await freshTpId();
   const [row] = await sql<{ id: string }[]>`
-    insert into users (team_id, role, name, email, neo_id, tp_id, status, sponsor_id, first_pv, phone)
-    values (${leader.teamId}, 'member', ${name}, ${email}, ${neo}, ${tpId}, 'invited', ${sponsor.id}, ${Math.round(pv)}, ${phone}) returning id`;
+    insert into users (team_id, role, name, email, neo_id, tp_id, status, sponsor_id, first_pv, phone, rank)
+    values (${leader.teamId}, 'member', ${name}, ${email}, ${neo}, ${tpId}, 'invited', ${sponsor.id}, ${existing ? null : Math.round(pv)}, ${phone}, ${rank}) returning id`;
+  if (rank > 0) await sql`insert into rank_events (team_id, user_id, from_rank, to_rank, confirmed_by) values (${leader.teamId}, ${row.id}, 0, ${rank}, ${leader.id})`;
   await sql`insert into feed (team_id, kind, who, by) values (${leader.teamId}, 'join', ${row.id}, ${sponsor.id})`;
   const claimId = text(f, "claim");
   if (/^[0-9a-f-]{36}$/.test(claimId))

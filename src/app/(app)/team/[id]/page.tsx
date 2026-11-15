@@ -39,7 +39,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
         <div className="kv" style={{ marginTop: 16 }}>
           <div><div className="k">Sponsor</div><div className="v">{sponsor?.name ?? "—"}</div></div>
           <div><div className="k">Joined</div><div className="v">{dmy(m.joinedAt)}</div></div>
-          <div><div className="k">First order</div><div className="v">{m.firstPv ?? 0} PV</div></div>
+          <div><div className="k">First order</div><div className="v">{m.firstPv != null ? `${m.firstPv} PV` : "—"}</div></div>
           <div><div className="k">PPV this month</div><div className="v">{stat?.ppv ?? "—"}</div></div>
           <div><div className="k">QPV reported / system</div><div className="v">{stat?.qpv?.toLocaleString("en-US") ?? "—"} / {(stat?.sysQpv ?? 0).toLocaleString("en-US")}</div></div>
           <div><div className="k">City</div><div className="v">{m.city || "—"}</div></div>

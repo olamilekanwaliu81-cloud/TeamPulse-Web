@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { claimsBy, isOpen, stateText, teamClaims } from "@/lib/claims";
 import { teamMembers } from "@/lib/users";
-import { firstName } from "@/lib/rules";
+import { firstName, rankName } from "@/lib/rules";
 import { ago } from "@/lib/format";
 import { ActionForm } from "@/components/ActionForm";
 import { askDetails, dismissClaim, reportSignup } from "@/app/actions/claims";
@@ -55,7 +55,7 @@ export default async function Signups() {
         {apps.length === 0 ? <div className="empty">No forms waiting. Make a link below and send it to the new person.</div> : (
           <div className="rows">{apps.map((a) => (
             <div className="row" key={a.id}>
-              <div className="grow"><div className="name">{a.name}</div><div className="sub">{a.email} · {a.neoId} · {a.firstPv} PV · {ago(a.createdAt)}</div></div>
+              <div className="grow"><div className="name">{a.name}</div><div className="sub">{a.kind === "existing" ? `Existing distributor · ${rankName(a.claimedRank)}` : `New sign-up · ${a.firstPv} PV`} · {a.email} · {a.neoId} · {ago(a.createdAt)}</div></div>
               <Link className="btn sm primary" href={`/team/add?app=${a.id}`}>Review and register</Link>
               <form action={dismissApplication}><input type="hidden" name="id" value={a.id} /><button className="btn sm bad" type="submit">Dismiss</button></form>
             </div>))}</div>
@@ -66,6 +66,8 @@ export default async function Signups() {
         <p className="sub">The new person fills in their own details. Nothing is registered until you check it and choose their sponsor.</p>
         <ActionForm action={createInvite} submit="Make a link">
           <div className="f2">
+            <div className="field"><label htmlFor="iv-kind">Who is it for?</label>
+              <select id="iv-kind" name="kind" defaultValue="new"><option value="new">A new sign-up</option><option value="existing">An existing distributor</option></select></div>
             <div className="field"><label htmlFor="iv-sp">Suggested sponsor (optional)</label>
               <select id="iv-sp" name="sponsor" defaultValue=""><option value="">I will choose later</option>{choices.map((m) => <option key={m.id} value={m.id}>{m.name}{m.id === u.id ? " (you)" : ""}</option>)}</select></div>
             <div className="field"><label htmlFor="iv-em">Email it to them (optional)</label><input id="iv-em" name="email" type="email" autoComplete="off" /></div>
@@ -74,7 +76,7 @@ export default async function Signups() {
         {invites.length > 0 && (
           <div className="rows" style={{ marginTop: 14 }}>{invites.map((i) => (
             <div className="row" key={i.id}>
-              <div className="grow"><div className="name">Link made {ago(i.createdAt)}</div><div className="sub">{i.sponsorId ? `Suggested sponsor: ${byId.get(i.sponsorId)?.name ?? "someone"} · ` : ""}Works until {i.expiresAt.toLocaleDateString("en-GB")}</div></div>
+              <div className="grow"><div className="name">{i.kind === "existing" ? "Existing distributors" : "New sign-ups"} · made {ago(i.createdAt)}</div><div className="sub">{i.sponsorId ? `Suggested sponsor: ${byId.get(i.sponsorId)?.name ?? "someone"} · ` : ""}Works until {i.expiresAt.toLocaleDateString("en-GB")}</div></div>
               <CopyLink url={`${appUrl()}/join/${i.token}`} />
               <form action={revokeInvite}><input type="hidden" name="id" value={i.id} /><button className="btn sm bad" type="submit">Turn off</button></form>
             </div>))}</div>

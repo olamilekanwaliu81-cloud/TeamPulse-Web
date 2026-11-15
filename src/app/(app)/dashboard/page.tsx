@@ -131,7 +131,7 @@ export default async function Dashboard() {
                 <section className="card c4"><PanelTitle>Invited, no login yet</PanelTitle>
                   <div className="rows">{invited.map((m) => (
                     <div className="row" key={m.id}>
-                      <div className="grow"><div className="name">{m.name}</div><div className="sub">Added {ago(m.joinedAt)} · {m.tpId} · first order {m.firstPv ?? 0} PV</div>
+                      <div className="grow"><div className="name">{m.name}</div><div className="sub">Added {ago(m.joinedAt)} · {m.tpId}{m.firstPv != null ? ` · first order ${m.firstPv} PV` : ""}</div>
                         {notDelivered(welcome.get(m.email.toLowerCase())?.status) && <div className="sub" style={{ color: "var(--bad)", fontWeight: 600 }}>Welcome email not delivered. Give them their ID yourself, or resend.</div>}</div>
                       <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn sm" type="submit">Resend</button></form>
                     </div>))}</div>
