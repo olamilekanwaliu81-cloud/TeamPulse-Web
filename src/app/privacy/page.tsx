@@ -33,6 +33,9 @@ export default function Privacy() {
         <li>Three services help us run the site and handle data for us: Supabase (database), Vercel (hosting) and Resend (email). They may store data outside Nigeria. We share nothing else with anyone unless the law requires it.</li>
       </ul>
 
+      <h2>Email tracking</h2>
+      <p>To learn whether our reminders work, TeamPulse records when an email is opened (a tiny image in the email) and when its button is clicked. Your team leader can see this for the people on the team. We do this ourselves, with no tracking company. If you block images in your mail app, opens are not recorded, but clicks still are.</p>
+
       <h2>Cookies and device storage</h2>
       <p>We use one sign-in cookie so you stay signed in, and a small note in your browser that remembers you opened the desktop app. There are no advertising or tracking cookies.</p>
 

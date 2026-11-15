@@ -34,7 +34,7 @@ export async function askDetails(f: FormData) {
   if (!by) return;
   await db()`update claims set state = 'details_asked', updated_at = now() where id = ${c.id}`;
   await sendMail({
-    to: by.email, name: by.name, subject: "Your team leader needs your new sign-up's details",
+    to: by.email, name: by.name, teamId: leader.teamId, subject: "Your team leader needs your new sign-up's details",
     html: `<p>Hi ${esc(firstName(by.name))}, your team leader would like to add ${c.count > 1 ? "your new sign-ups" : "your new sign-up"} to the team. Please send the details.</p>`,
     ctaLabel: "Send the details", ctaUrl: `${appUrl()}/signups/${c.id}/details`,
   });

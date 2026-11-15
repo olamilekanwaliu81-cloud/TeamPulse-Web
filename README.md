@@ -93,3 +93,7 @@ A team leader can make a sign-up link on the Sign-ups page (`/signups`). The new
 ## When someone does not qualify for a month
 
 A member who is inactive, has under 100 PPV, or reported no PPV after the PPV question closed (the 17th) does not qualify as a Distributor that month. The people they sponsored are then counted under the nearest upline who did qualify, until they qualify again (`effectiveSponsors` in `src/lib/ranks.ts`). The tree and system QPV follow this. Their real sponsor never changes in the database.
+
+## Email opens and clicks
+
+Each email sent through Resend carries a 1-pixel image (`/t/o/<id>`, counts an open) and its button goes through `/t/c/<id>` (counts the click, then redirects to the real link saved with the email, so it cannot send anyone elsewhere). The leader sees totals on the dashboard and details at `/emails`. Counts are stored in `mail_log` (migration 006). Opens are a guide only, because mail apps may hide or preload images; clicks are reliable. Set `EMAIL_TRACKING=0` to switch it off. No tracking company is involved.

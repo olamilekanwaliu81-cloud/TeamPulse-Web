@@ -39,7 +39,7 @@ export async function createInvite(_: FormState, f: FormData): Promise<FormState
   for (const [n, to] of todo.entries()) {
     if (n) await new Promise((r) => setTimeout(r, 600)); // the email service allows about two a second
     const r = await sendMail({
-      to, name: "", subject: kind === "existing" ? `${firstName(leader.name)} invites you to TeamPulse` : `${firstName(leader.name)} invites you to join the team`,
+      to, name: "", teamId: leader.teamId, subject: kind === "existing" ? `${firstName(leader.name)} invites you to TeamPulse` : `${firstName(leader.name)} invites you to join the team`,
       html: kind === "existing"
         ? `<p>Hello, ${esc(leader.name)} now uses TeamPulse for the team's monthly check-ins. You are already a distributor, so there is nothing new to buy. Please add your details once. It takes about a minute.</p><p>The link works for ${INVITE_DAYS} days.</p>`
         : `<p>Hello, ${esc(leader.name)} would like to welcome you to the team. Please fill in your details. It takes about a minute.</p><p>The link works for ${INVITE_DAYS} days.</p>`,

@@ -18,7 +18,7 @@ export async function sendWelcomeEmail(member: User, sponsor: User): Promise<Mai
   const token = await createToken("setpw", member.id);
   const site = appUrl();
   return sendMail({
-    to: member.email, name: member.name,
+    to: member.email, name: member.name, teamId: member.teamId,
     subject: member.firstPv == null
       ? `Welcome to TeamPulse, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`
       : `Welcome to the family, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`,
@@ -40,7 +40,7 @@ export async function sendWelcomeEmail(member: User, sponsor: User): Promise<Mai
 export async function sendResetEmail(user: User, byLeader = false): Promise<MailResult> {
   const token = await createToken("reset", user.id);
   return sendMail({
-    to: user.email, name: user.name, subject: "Reset your TeamPulse password",
+    to: user.email, name: user.name, teamId: user.teamId, subject: "Reset your TeamPulse password",
     html: `<p>Hi ${esc(firstName(user.name))},</p><p>${byLeader
       ? `Your team leader asked us to help you set a new password for TeamPulse ID <b>${esc(user.tpId)}</b>.`
       : `We got a request to reset the password for TeamPulse ID <b>${esc(user.tpId)}</b>. If it was not you, ignore this email.`} The link works for 7 days and only once.</p>`,

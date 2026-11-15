@@ -18,6 +18,8 @@ import { teamClaims } from "@/lib/claims";
 import { latestMailStatus, mailProblem, notDelivered } from "@/lib/mail";
 import { confirmRank, dismissRank } from "@/app/actions/ranks";
 import { remindMember } from "@/app/actions/checkins";
+import { tallies, teamMail } from "@/lib/mail-stats";
+import { pct as pctOf } from "@/lib/mail-kinds";
 
 export const metadata = { title: "Dashboard" };
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -56,6 +58,7 @@ export default async function Dashboard() {
   const paidOcc = occs.find((o) => o.key === "paid")!;
   const unpaid = (await teamAnswers(u.teamId, "paid", paidOcc.month)).filter((a) => a.answers.paid === false && a.occ === paidOcc.id);
 
+  const mailTotals = tallies(await teamMail(u.teamId, 30))[0];
   const welcome = await latestMailStatus(invited.map((m) => m.email), "Welcome to the family");
   const unsent = invited.filter((m) => notDelivered(welcome.get(m.email.toLowerCase())?.status));
   const stats = await monthStats(u.teamId, all, T);
@@ -195,6 +198,13 @@ export default async function Dashboard() {
                     <form action={remindMember}><input type="hidden" name="id" value={m.id} /><button className="btn sm" type="submit">Remind</button></form>
                   </div>))}</div>
               ) : <p className="sub">Everyone has replied.</p>}
+            </section>
+            <section className="card c4"><PanelTitle href="/emails" link="Details">Email activity · 30 days</PanelTitle>
+              {mailTotals.sent === 0 ? <p className="sub">No emails sent yet.</p> : (
+                <div className="kv"><div><div className="k">Sent</div><div className="v">{mailTotals.sent}</div></div>
+                  <div><div className="k">Opened</div><div className="v">{pctOf(mailTotals.opened, mailTotals.sent)}</div></div>
+                  <div><div className="k">Clicked</div><div className="v">{pctOf(mailTotals.clicked, mailTotals.sent)}</div></div></div>
+              )}
             </section>
             <section className="card c4"><PanelTitle>Not paid</PanelTitle>
               {unpaid.length ? <div className="rows">{unpaid.map((a) => { const m = byId.get((a as { userId: string }).userId); return m ? <div className="row" key={a.occ + m.id}><div className="grow"><div className="name">{m.name}</div><div className="sub">Monthly responsibility not paid yet</div></div></div> : null; })}</div>

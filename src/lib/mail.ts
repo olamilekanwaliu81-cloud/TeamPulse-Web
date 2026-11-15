@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { db } from "./db";
 
-export type Mail = { to: string; name: string; subject: string; html: string; ctaLabel?: string; ctaUrl?: string };
+export type Mail = { to: string; name: string; subject: string; html: string; ctaLabel?: string; ctaUrl?: string; teamId?: string };
 
 export const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 export const mailboxEnabled = () => process.env.NODE_ENV !== "production" || process.env.MAILBOX_ENABLED === "1";
@@ -14,13 +14,13 @@ export type MailResult = { status: "logged" | "sent" | "failed"; error?: string 
 
 export async function sendMail(m: Mail): Promise<MailResult> {
   const rows = await db()<{ id: string }[]>`
-    insert into mail_log (to_email, to_name, subject, html, cta_label, cta_url)
-    values (${m.to}, ${m.name}, ${m.subject}, ${m.html}, ${m.ctaLabel ?? null}, ${m.ctaUrl ?? null}) returning id`;
+    insert into mail_log (to_email, to_name, subject, html, cta_label, cta_url, team_id)
+    values (${m.to}, ${m.name}, ${m.subject}, ${m.html}, ${m.ctaLabel ?? null}, ${m.ctaUrl ?? null}, ${m.teamId ?? null}) returning id`;
   const id = rows[0].id;
   const key = process.env.RESEND_API_KEY, from = process.env.EMAIL_FROM;
   if (!key || !from) return { status: "logged" }; // saved only: nothing was delivered
   try {
-    const { data, error } = await new Resend(key).emails.send({ from, to: m.to, subject: m.subject, html: wrap(m) });
+    const { data, error } = await new Resend(key).emails.send({ from, to: m.to, subject: m.subject, html: wrap(m, id) });
     if (error) throw new Error(error.message);
     await db()`update mail_log set status = 'sent', provider_id = ${data?.id ?? null} where id = ${id}`;
     return { status: "sent" };
@@ -59,13 +59,19 @@ export async function latestMailStatus(emails: string[], subjectPrefix: string):
 }
 
 /** The HTML that is actually sent: the message, a button, and a plain-text link under it. */
-export function wrap(m: Mail): string {
+export const trackingOn = () => process.env.EMAIL_TRACKING !== "0";
+
+export function wrap(m: Mail, trackId?: string): string {
+  // With an id, the button goes through our own redirect (which counts the click) and a 1-pixel image counts the open.
+  const track = trackId && trackingOn();
+  const href = track && m.ctaUrl ? `${appUrl()}/t/c/${trackId}` : m.ctaUrl;
+  const pixel = track ? `<img src="${appUrl()}/t/o/${trackId}" width="1" height="1" alt="" style="display:block;border:0">` : "";
   const btn = m.ctaLabel && m.ctaUrl
-    ? `<p style="margin:22px 0"><a href="${m.ctaUrl}" style="background:#2F62F5;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;display:inline-block">${m.ctaLabel}</a></p>
+    ? `<p style="margin:22px 0"><a href="${href}" style="background:#2F62F5;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;display:inline-block">${m.ctaLabel}</a></p>
        <p style="font-size:13px;color:#6B7799">If the button does not work, copy this link into your browser:<br><span style="word-break:break-all">${m.ctaUrl}</span></p>`
     : "";
   return `<!doctype html><html><body style="margin:0;background:#EEF0F8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0F1B44">
   <div style="max-width:560px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:20px;padding:28px">
   <p style="font-weight:800;font-size:18px;margin:0 0 18px;color:#2F62F5">TeamPulse</p>${m.html}${btn}
-  <p style="font-size:12px;color:#6B7799;margin-top:26px">TeamPulse · monthly check-ins for your team · <a href="${appUrl()}/privacy" style="color:#6B7799">Privacy notice</a></p></div></div></body></html>`;
+  <p style="font-size:12px;color:#6B7799;margin-top:26px">TeamPulse · monthly check-ins for your team · <a href="${appUrl()}/privacy" style="color:#6B7799">Privacy notice</a></p></div>${pixel}</div></body></html>`;
 }

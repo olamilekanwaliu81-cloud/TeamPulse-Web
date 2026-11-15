@@ -10,13 +10,13 @@ async function once(userId: string, occ: string, kind: string): Promise<boolean>
   return r.length === 1;
 }
 
-async function mailAbout(u: { name: string; email: string; id: string }, o: Occ, kind: "open" | "last" | "nudge", today: Day, leaderName?: string) {
+async function mailAbout(u: { name: string; email: string; id: string; teamId?: string }, o: Occ, kind: "open" | "last" | "nudge", today: Day, leaderName?: string) {
   const c = CI[o.key];
   const lead = kind === "open" ? c.body
     : kind === "last" ? `Today is the last day to answer: ${c.body}`
     : `${leaderName ?? "Your team leader"} is waiting for your answer. ${c.body}`;
   await sendMail({
-    to: u.email, name: u.name,
+    to: u.email, name: u.name, teamId: u.teamId,
     subject: kind === "open" ? `${c.title}: your check-in is open` : kind === "last" ? `Last day: ${c.title}` : `Reminder: ${c.title}`,
     html: `<p>Hi ${esc(firstName(u.name))}, ${esc(lead)}</p><p>It takes about two minutes. You can answer until ${esc(dmyDay(o.close))}.</p>`,
     ctaLabel: "Answer now", ctaUrl: `${appUrl()}/checkins?key=${o.key}`,
@@ -46,7 +46,7 @@ export async function runDailyJob(today: Day): Promise<{ opened: number; last: n
 }
 
 /** A team leader nudges one member about everything open and unanswered. At most once a day per question. */
-export async function nudge(member: { id: string; name: string; email: string }, today: Day, leaderName: string): Promise<number> {
+export async function nudge(member: { id: string; name: string; email: string; teamId?: string }, today: Day, leaderName: string): Promise<number> {
   let n = 0;
   for (const k of KEYS) {
     const s = stateOf(k, today);
