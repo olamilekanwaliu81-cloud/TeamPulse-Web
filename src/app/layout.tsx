@@ -13,6 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* The Windows app opens the site with ?desktop=windows. Remember it, so the website does not offer downloads inside the app. */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(/[?&]desktop=/.test(location.search))localStorage.setItem('tp_desktop','1')}catch(e){}" }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}

@@ -420,3 +420,13 @@ a.ci-item{text-decoration:none;color:inherit}
   .bub{width:42px;height:42px}.bub .ic{width:22px;height:22px}
   .clockpill{padding:8px 12px}
 }
+
+.st.n{background:var(--red-soft);color:var(--bad)}
+.ladder{display:flex;flex-direction:column;gap:8px}
+.lad{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}
+.lad.here{border-color:var(--accent);background:var(--accent-soft)}
+.lad.done{opacity:.75}
+.lad-n{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;font-size:.8rem;flex:none}
+.lad.here .lad-n{background:var(--accent);color:#fff}
+.lad-t{flex:1;min-width:0}.lad-t b{display:block;font-size:.9rem}.lad-t small{color:var(--muted);font-size:.76rem}
+.lad-r{font-weight:800;color:var(--accent);font-size:.9rem;white-space:nowrap}

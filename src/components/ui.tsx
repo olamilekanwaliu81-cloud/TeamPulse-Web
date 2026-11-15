@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "./Icons";
-import type { MonthStatus } from "@/lib/ranks";
+import { STAGES, type MonthStatus } from "@/lib/ranks";
 import { KEY_COLOR, title, upcoming, weekDays } from "@/lib/calendar";
 import { dmyDay, type Day, type Key } from "@/lib/checkins";
 
@@ -65,8 +65,9 @@ export function ColumnChart({ data, format = (n: number) => String(n) }: { data:
 /** Monthly status of a member: Qualified, Title only, or no numbers yet. */
 export function StatusPill({ s }: { s: MonthStatus }) {
   if (s.state === "qualified") return <span className="st q" title={s.rate ? `Bonus rate ${s.rate}%` : undefined}>Qualified</span>;
+  if (s.state === "title_only" && s.noPpv) return <span className="st n" title={s.why.join(". ")}>No bonus</span>;
   if (s.state === "title_only") return <span className="st t" title={s.why.join(". ")}>Title only</span>;
-  return <span className="st u">Not reported</span>;
+  return <span className="st u" title="No PPV reported yet this month">No PPV yet</span>;
 }
 
 /** This week, Monday to Sunday, with the check-in dates and what opens, is due or closes soon. */
@@ -95,4 +96,19 @@ export function WeekPanel({ today }: { today: Day }) {
 
 export function greeting(hour: number) {
   return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+}
+
+/** The stages from the plan, with the member's own stage marked. */
+export function RankLadder({ rank }: { rank?: number }) {
+  return (
+    <div className="ladder">
+      {STAGES.map((s, i) => (
+        <div key={s.name} className={`lad ${rank === i ? "here" : ""} ${rank != null && i < rank ? "done" : ""}`}>
+          <span className="lad-n">{i + 1}</span>
+          <div className="lad-t"><b>{s.name}{rank === i ? " (you)" : ""}</b><small>{s.needLabel}{s.from ? ` · ${s.from}` : ""}</small></div>
+          <span className="lad-r">{s.rate}</span>
+        </div>
+      ))}
+    </div>
+  );
 }

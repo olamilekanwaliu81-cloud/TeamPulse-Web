@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthStatus, recommend, svbRate, systemQpv } from "./ranks";
+import { monthStatus, recommend, statusText, svbRate, systemQpv } from "./ranks";
 
 const m = (o: Partial<Parameters<typeof recommend>[0]> = {}) => ({ role: "member", status: "active", rank: 0, ppv: 136, qpv: 600, ...o });
 
@@ -71,5 +71,33 @@ describe("monthly status", () => {
     expect(svbRate(100, 999)).toBe(5);
     expect(svbRate(100, 4000)).toBe(25);
     expect(svbRate(99, 4000)).toBeNull();
+  });
+});
+
+describe("status in plain words", () => {
+  it("a Senior Manager with 800 QPV keeps the title, loses the status, and earns 5%", () => {
+    const s = monthStatus({ role: "member", rank: 2, ppv: 120, qpv: 800 });
+    expect(s.state === "title_only" && s.noPpv).toBe(false);
+    expect(s.state === "title_only" && s.rate).toBe(5);
+    const t = statusText({ rank: 2, ppv: 120, qpv: 800 }, s);
+    expect(t.headline).toBe("Title only this month");
+    expect(t.detail).toMatch(/5% bonus level/);
+    expect(t.detail).toMatch(/instead of 10%/);
+  });
+  it("without 100 PPV there is no bonus and no status, but the title stays", () => {
+    const s = monthStatus({ role: "member", rank: 2, ppv: 60, qpv: 3000 });
+    expect(s.state === "title_only" && s.noPpv).toBe(true);
+    expect(s.state === "title_only" && s.rate).toBeNull();
+    const t = statusText({ rank: 2, ppv: 60, qpv: 3000 }, s);
+    expect(t.headline).toBe("No bonus this month");
+    expect(t.detail).toMatch(/keep your Senior Manager title/);
+  });
+  it("no PPV reported means they do not qualify as a Distributor and earn nothing", () => {
+    const t = statusText({ rank: 0, ppv: null, qpv: null }, monthStatus({ role: "member", rank: 0, ppv: null, qpv: null }));
+    expect(t.detail).toMatch(/do not qualify as a Distributor and earn nothing/);
+  });
+  it("under 250 QPV there is no bonus even with the status short", () => {
+    const s = monthStatus({ role: "member", rank: 1, ppv: 100, qpv: 200 });
+    expect(statusText({ rank: 1, ppv: 100, qpv: 200 }, s).detail).toMatch(/under 250/);
   });
 });

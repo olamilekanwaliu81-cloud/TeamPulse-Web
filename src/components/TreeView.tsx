@@ -6,7 +6,7 @@ import { initials } from "@/lib/rules";
 
 export type TreeNode = {
   id: string; name: string; photo: string | null; rank: string; status: "invited" | "active" | "inactive";
-  tpId: string; ppv: number | null; qpv: number | null; month: "qualified" | "title_only" | "unreported"; children: TreeNode[];
+  tpId: string; ppv: number | null; qpv: number | null; month: "qualified" | "title_only" | "no_bonus" | "unreported"; children: TreeNode[];
 };
 
 const HUES = ["#3A5BA0", "#7A3B3B", "#4B4B9A", "#3B6B4F", "#6B5A2B", "#5A3B7A"];
@@ -24,7 +24,7 @@ function Card({ n, root, count, closed, toggle }: { n: TreeNode; root?: boolean;
       <span className="orank">{n.rank}</span>
       <span className="ost">{n.status === "invited" ? "Invited. No login yet." : n.status === "inactive" ? "Inactive" : root ? `${count} directly sponsored` : n.ppv == null ? "No PPV yet" : `${n.ppv.toLocaleString("en-US")} PPV`}</span>
       {!root && n.status === "active" && count > 0 && n.qpv != null && <span className="ost sm">{n.qpv.toLocaleString("en-US")} QPV</span>}
-      {!root && n.status === "active" && n.month !== "unreported" && <span className={`st ${n.month === "qualified" ? "q" : "t"}`} style={{ marginTop: 4 }}>{n.month === "qualified" ? "Qualified" : "Title only"}</span>}
+      {!root && n.status === "active" && n.month !== "unreported" && <span className={`st ${n.month === "qualified" ? "q" : n.month === "no_bonus" ? "n" : "t"}`} style={{ marginTop: 4 }}>{n.month === "qualified" ? "Qualified" : n.month === "no_bonus" ? "No bonus" : "Title only"}</span>}
       <span className="mono oid">{n.tpId}</span>
     </>
   );

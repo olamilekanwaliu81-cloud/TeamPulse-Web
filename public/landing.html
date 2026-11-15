@@ -258,7 +258,7 @@ footer .links a{color:var(--foot-ink)}
 <header class="nav" id="nav">
   <div class="in nav-in">
     <a class="brand" href="#top" data-go="top"><svg viewBox="0 0 28 28" aria-hidden="true"><use href="#i-pulse"/></svg>TeamPulse</a>
-    <span class="nowpill" id="nowpill" aria-live="off"></span><nav class="links" aria-label="Page sections"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#how" data-go="how">How it works</a><a href="#leaders" data-go="leaders">For leaders</a><a href="#faq" data-go="faq">Questions</a></nav>
+    <span class="nowpill" id="nowpill" aria-live="off"></span><nav class="links" aria-label="Page sections"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#how" data-go="how">How it works</a><a href="#leaders" data-go="leaders">For leaders</a><a href="#download" data-go="download" data-dl-link>Download</a><a href="#faq" data-go="faq">Questions</a></nav>
     <div class="nav-cta"><a class="btn ghost sm" href="/signin">Try the app</a><a class="btn primary sm" href="#join" data-go="join">Sign in</a></div>
   </div>
 </header>
@@ -280,7 +280,7 @@ footer .links a{color:var(--foot-ink)}
           <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Two minutes per question</span>
           <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>No spreadsheets</span>
         </div>
-        
+        <p class="sub-link" data-dl-link><a href="#download" data-go="download">Download for Mac or Windows</a></p>
       </div>
 
       <div class="visual" role="img" aria-label="Illustration of a TeamPulse dashboard with a team progress gauge, a new-member celebration and a payout reminder">
@@ -373,12 +373,13 @@ footer .links a{color:var(--foot-ink)}
     </div>
     <div class="ranks" role="group" aria-label="Rank thresholds TeamPulse checks">
       <h3>Built around the NeoLife plan</h3>
-      <p class="sub" style="color:var(--muted);font-size:.9rem">Monthly QPV needed, with at least 100 PPV.</p>
-      <div class="rk"><b>Manager</b><span class="q">500 QPV</span><div class="bar"><i style="width:12.5%"></i></div></div>
-      <div class="rk"><b>Senior Manager</b><span class="q">1,000 QPV</span><div class="bar"><i style="width:25%"></i></div></div>
-      <div class="rk"><b>Executive Manager</b><span class="q">2,000 QPV</span><div class="bar"><i style="width:50%"></i></div></div>
-      <div class="rk"><b>Director</b><span class="q">4,000 QPV</span><div class="bar"><i style="width:100%"></i></div></div>
-      <p class="foot"><b>A title is yours once you earn it.</b> Every month you need 100 PPV and your title's QPV to be <b>Qualified</b>. A month without it, you keep the title but you are <b>Title only</b>, and you earn from the bonus chart by that month's QPV. TeamPulse recommends rank changes. Your leader confirms every one.</p>
+      <p class="sub" style="color:var(--muted);font-size:.9rem">What each stage needs every month, with at least 100 PPV.</p>
+      <div class="rk"><b>Distributor</b><span class="q">100 PPV · 3% from 250 QPV</span><div class="bar"><i style="width:6%"></i></div></div>
+      <div class="rk"><b>Manager</b><span class="q">500 QPV · 5%</span><div class="bar"><i style="width:12.5%"></i></div></div>
+      <div class="rk"><b>Senior Manager</b><span class="q">1,000 QPV · 10%</span><div class="bar"><i style="width:25%"></i></div></div>
+      <div class="rk"><b>Executive Manager</b><span class="q">2,000 QPV · 15%+</span><div class="bar"><i style="width:50%"></i></div></div>
+      <div class="rk"><b>Director</b><span class="q">4,000 QPV · 25%</span><div class="bar"><i style="width:100%"></i></div></div>
+      <p class="foot"><b>A title is yours once you earn it. Status is monthly.</b> You are <b>Qualified</b> when you reach 100 PPV and your title's QPV. With 100 PPV but less QPV you keep the title but not the status, and you still earn the bonus level your QPV reaches (a Senior Manager with 500 to 999 QPV earns 5%). Under 100 PPV there is no bonus and no status, but the title stays. TeamPulse recommends rank changes. Your leader confirms every one.</p>
     </div>
   </div>
 </section>
@@ -420,11 +421,30 @@ footer .links a{color:var(--foot-ink)}
   </div>
 </section>
 
+<section id="download">
+  <div class="in">
+    <div class="sec-head c"><span class="eyebrow">Download</span><h2>Use TeamPulse as an app on your computer.</h2><p class="lead">The same TeamPulse in a window of its own, with the same team and the same data as on your phone. It needs an internet connection. Prefer no download? <a href="/signin">Use it in your browser</a>.</p></div>
+    <div class="dl">
+      <article class="dl-card" id="dl-mac"><span class="rec-tag" hidden>Recommended for your computer</span>
+        <div class="dl-top"><span class="tile t-acc"><svg class="ic" aria-hidden="true"><use href="#i-laptop"/></svg></span><div><h3>TeamPulse for Mac</h3><div class="dl-meta">macOS 12 or newer · Intel and Apple Silicon · 108 KB</div></div></div>
+        <a class="btn primary" href="/downloads/TeamPulse-mac.zip" download="TeamPulse-mac.zip" data-dl data-file="TeamPulse-mac.zip">Download for Mac <svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></a>
+        <ol class="dl-steps"><li>Open the downloaded zip file.</li><li>Drag <b>TeamPulse</b> into your <b>Applications</b> folder.</li><li>Open TeamPulse from Applications or Launchpad.</li></ol>
+        <div class="dl-note"><b>If your Mac says it cannot check the app:</b> it is not from the App Store yet. On macOS 15, open <b>System Settings</b>, then <b>Privacy &amp; Security</b>, scroll down and choose <b>Open Anyway</b>. On macOS 14 or older, Control-click the app and choose <b>Open</b>. You only do this once.</div></article>
+      <article class="dl-card" id="dl-win"><span class="rec-tag" hidden>Recommended for your computer</span>
+        <div class="dl-top"><span class="tile t-bl"><svg class="ic" aria-hidden="true"><use href="#i-laptop"/></svg></span><div><h3>TeamPulse for Windows</h3><div class="dl-meta">Windows 10 and 11 · 18 KB</div></div></div>
+        <a class="btn primary" href="/downloads/TeamPulse-windows.zip" download="TeamPulse-windows.zip" data-dl data-file="TeamPulse-windows.zip">Download for Windows <svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></a>
+        <ol class="dl-steps"><li>Right-click the downloaded zip file and choose <b>Extract All</b>.</li><li>Open the folder and double-click <b>Install TeamPulse</b>.</li><li>Open TeamPulse from the Start menu or the desktop icon.</li></ol>
+        <div class="dl-note"><b>If Windows shows a warning:</b> the app is not signed by Microsoft yet. Choose <b>Run</b>, or <b>More info</b> and then <b>Run anyway</b>. TeamPulse opens in its own window using Microsoft Edge, which is already on Windows 10 and 11. Google Chrome works too. It needs an internet connection.</div></article>
+    </div>
+    <p class="dl-foot" id="dl-other" hidden>Downloads are for computers. On a phone, use TeamPulse in your browser: <a href="/signin">open the app</a>.</p>
+  </div>
+</section>
+
 <section id="faq">
   <div class="in">
     <div class="sec-head c"><span class="eyebrow">Questions</span><h2>Before you sign in.</h2></div>
     <div class="faq">
-      <details><summary>What is the difference between my title and being Qualified?</summary><p>Your title (Manager, Senior Manager and so on) is earned once and kept. Being Qualified is monthly. Each month you need 100 PPV and the QPV of your title. If you miss it, you keep your title for that month but you are Title only, and you earn from the bonus chart by that month's QPV.</p></details>
+      <details><summary>What is the difference between my title and my status?</summary><p>Your title (Manager, Senior Manager and so on) is earned once and kept. Your status is monthly: you are Qualified when you have 100 PPV and the QPV of your title. If you have 100 PPV but less QPV, you keep the title, lose the status for that month, and still earn the bonus level your QPV reaches. Under 100 PPV you earn no bonus and have no status, but you keep your title.</p></details>
       <details><summary>Who sees my numbers?</summary><p>Your team leader, who is the Admin. If you are in a QSM's downline, that QSM sees your answers too. Other members never see them.</p></details>
       <details><summary>What if I miss a question?</summary><p>Each question stays open for three days after its date. After that it is marked Missed. Next month's question opens on its own, and you never have to answer several months at once.</p></details>
       <details><summary>Can I change my NeoLife ID?</summary><p>No. It is your official number, so only your team leader can correct it, and every correction is logged. You can change your name, picture and other details yourself.</p></details>
@@ -445,7 +465,7 @@ footer .links a{color:var(--foot-ink)}
       <a class="brand" href="#top" data-go="top"><svg viewBox="0 0 28 28" aria-hidden="true"><use href="#i-pulse"/></svg>TeamPulse</a>
       <p>TeamPulse is an independent team tool and is not affiliated with or endorsed by NeoLife International.</p>
     </div>
-    <nav class="links" aria-label="Footer"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#faq" data-go="faq">Questions</a><a href="#join" data-go="join">Sign in</a></nav>
+    <nav class="links" aria-label="Footer"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#download" data-go="download" data-dl-link>Download</a><a href="#faq" data-go="faq">Questions</a><a href="#join" data-go="join">Sign in</a></nav>
   </div>
 </footer>
 <div class="copy-toast" id="toast" role="status" hidden></div>
@@ -475,6 +495,33 @@ form.addEventListener('submit',e=>{
 let tt;const toast=t=>{const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{el.hidden=true},3200)};
 $('#forgot').addEventListener('click',()=>{location.href='/forgot'});
 
+/* downloads: recommend the visitor's system, hide the section inside the desktop apps */
+(function(){
+  let remembered=false;try{if(/[?&]desktop=/.test(location.search))localStorage.setItem('tp_desktop','1');remembered=localStorage.getItem('tp_desktop')==='1'}catch(_){}
+  const desktopApp=!!window.TP_DESKTOP||/[?&]desktop=/.test(location.search)||remembered;
+  const section=document.getElementById('download');
+  if(desktopApp){if(section)section.hidden=true;document.querySelectorAll('[data-dl-link]').forEach(el=>{el.hidden=true});return}
+  const ua=navigator.userAgent||'';
+  const os=/iPhone|iPad|Android/i.test(ua)?'other':/Windows/i.test(ua)?'win':/Mac/i.test(ua)?'mac':'other';
+  const rec=document.getElementById(os==='win'?'dl-win':os==='mac'?'dl-mac':'');
+  if(rec){rec.classList.add('rec');const tag=rec.querySelector('.rec-tag');if(tag)tag.hidden=false}
+  else{const o=document.getElementById('dl-other');if(o)o.hidden=false}
+  /* In a normal browser the link downloads the file. Inside claude.ai, where links cannot download, use the viewer's save prompt. */
+  document.querySelectorAll('a[data-dl]').forEach(a=>a.addEventListener('click',async e=>{
+    let dl=null;
+    try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(_){}
+    if(!dl)return;
+    e.preventDefault();
+    try{
+      let blob;
+      const emb=window.__TP_FILES&&window.__TP_FILES[a.dataset.file];
+      if(emb){const bin=atob(emb),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);blob=new Blob([u],{type:'application/zip'})}
+      else{const r=await fetch(a.getAttribute('href'));if(!r.ok)throw new Error('the file is missing');blob=await r.blob()}
+      await dl.save({filename:a.dataset.file,data:blob});
+      toast('Download ready');
+    }catch(err){if(!(err&&err.code==='declined'))toast('The download could not start. Try again.')}
+  }));
+})();
 
 /* today's date and the time in Lagos, so everyone sees the same clock */
 (function(){const el=document.getElementById('nowpill');if(!el)return;

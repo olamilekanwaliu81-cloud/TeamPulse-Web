@@ -26,6 +26,8 @@ The clickable prototype in `../prototype` is the design reference. This folder i
 - **Date, time and calendar** in the top bar of every page (Lagos time), a month calendar with the check-in dates and windows, and a This week strip.
 - **Design**: light dashboard style with a blue accent, on the app and the website.
 
+- **Mac and Windows apps**: the website offers one download for each (`/downloads/TeamPulse-mac.zip` and `TeamPulse-windows.zip`). Both open the live site in a window of their own, with the same team and data as on a phone, and need an internet connection. The Mac app is a small native app (Intel and Apple Silicon); the Windows download is an installer script that opens the site in an Edge or Chrome app window with its own saved sign-in. Neither is signed with a paid certificate yet, so Mac and Windows show a first-time warning (the website explains the click-through). Rebuild them with `bash ../scripts/build_desktop.sh` (from the TeamPulse folder), then commit and push this folder. The Windows download has not been run on a real Windows PC.
+
 Coming next: Resend setup for real email delivery to any address, a privacy notice, then desktop apps on the real app.
 
 ## Try it on your computer (no accounts needed)

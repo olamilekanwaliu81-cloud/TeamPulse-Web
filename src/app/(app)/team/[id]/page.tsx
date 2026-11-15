@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { scopeFor, teamMembers, userById } from "@/lib/users";
 import { rankName } from "@/lib/rules";
+import { monthStatus, statusText } from "@/lib/ranks";
+import { StatusPill } from "@/components/ui";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { resendInvite } from "@/app/actions/team";
@@ -44,6 +46,8 @@ export default async function Member({ params }: { params: Promise<{ id: string 
           {admin && <div><div className="k">Email</div><div className="v">{m.email}</div></div>}
           {admin && <div><div className="k">Phone</div><div className="v">{m.phone || "—"}</div></div>}
         </div>
+        {m.status === "active" && (() => { const ms = monthStatus({ role: m.role, rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }), tx = statusText({ rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }, ms);
+          return <p className="rule" style={{ marginTop: 14 }}><StatusPill s={ms} /> <b>{tx.headline}.</b> {tx.detail}</p>; })()}
         {m.bio && <p className="sub" style={{ marginTop: 14 }}>{m.bio}</p>}
         {admin && m.id !== viewer.id && (
           <div className="inline" style={{ marginTop: 18 }}>

@@ -53,20 +53,50 @@ export function svbRate(ppv: number | null, qpv: number | null): number | null {
 export type MonthStatus =
   | { state: "unreported" }
   | { state: "qualified"; rate: number | null }
-  | { state: "title_only"; why: string[]; rate: number | null };
+  | { state: "title_only"; why: string[]; rate: number | null; noPpv: boolean };
+
+/** The bonus level a title reaches at its own QPV: Distributor 3%, Manager 5%, Senior Manager 10%, Executive Manager 15%, Director 25%. */
+export const TITLE_RATE = [3, 5, 10, 15, 25] as const;
 
 /**
- * A title (Manager, Senior Manager...) is earned once and kept. Qualified status is earned again every month:
- * at least 100 PPV, and for Manager and above the QPV of the title. A month without it, the member keeps the
- * title but is "Title only": they earn from the bonus chart by that month's QPV, and only with 100 PPV.
- * A Distributor is qualified for the month with 100 PPV.
+ * A title (Manager, Senior Manager...) is earned once and kept. STATUS is monthly and means consistency at the title:
+ * 100 PPV and the QPV of the title. Short of the QPV with 100 PPV, the member keeps the title, loses the status
+ * for the month, and still earns the bonus level their QPV reaches on the chart. Under 100 PPV (or no PPV), the
+ * member earns no bonus and has no status, but still keeps the title. A Distributor qualifies with 100 PPV.
  */
 export function monthStatus(p: { role: string; rank: number; ppv: number | null; qpv: number | null }): MonthStatus {
   if (p.ppv == null) return { state: "unreported" };
   const need = RANKS[Math.min(p.rank, RANKS.length - 1)].qpv;
   const why: string[] = [];
-  if (p.ppv < MIN_PPV) why.push(`PPV ${p.ppv} is under the ${MIN_PPV} needed`);
+  const noPpv = p.ppv < MIN_PPV;
+  if (noPpv) why.push(`PPV ${p.ppv} is under the ${MIN_PPV} needed`);
   if (p.rank >= 1 && (p.qpv == null || p.qpv < need)) why.push(`QPV ${p.qpv ?? 0} is under the ${need.toLocaleString("en-US")} needed for ${RANKS[p.rank].name}`);
   const rate = svbRate(p.ppv, p.qpv);
-  return why.length ? { state: "title_only", why, rate } : { state: "qualified", rate };
+  return why.length ? { state: "title_only", why, rate, noPpv } : { state: "qualified", rate };
 }
+
+export type StatusText = { headline: string; detail: string; tone: "good" | "warn" | "bad" | "info" };
+
+/** What a member's month means, in plain words. */
+export function statusText(p: { rank: number; ppv: number | null; qpv: number | null }, s: MonthStatus): StatusText {
+  const name = RANKS[Math.min(p.rank, RANKS.length - 1)].name, need = RANKS[Math.min(p.rank, RANKS.length - 1)].qpv.toLocaleString("en-US");
+  const keep = p.rank >= 1 ? ` You keep your ${name} title.` : "";
+  if (s.state === "unreported")
+    return { tone: "info", headline: "No PPV reported yet", detail: `Without PPV this month you do not qualify as a Distributor and earn nothing.${keep}` };
+  if (s.state === "qualified")
+    return { tone: "good", headline: p.rank >= 1 ? `Qualified ${name}` : "Qualified Distributor",
+      detail: `You have 100+ PPV${p.rank >= 1 ? ` and ${need}+ QPV` : ""}. ${s.rate ? `Your bonus level this month is ${s.rate}%.` : "The bonus starts at 250 QPV (3%)."}` };
+  if (s.noPpv)
+    return { tone: "bad", headline: "No bonus this month", detail: `PPV ${p.ppv ?? 0} is under 100. You earn no bonus and have no status this month.${keep}` };
+  return { tone: "warn", headline: "Title only this month",
+    detail: `QPV ${p.qpv ?? 0} is under the ${need} needed for ${name} status. You keep the title, but not the status. ${s.rate ? `You still earn the ${s.rate}% bonus level your QPV reaches, instead of ${TITLE_RATE[Math.min(p.rank, 4)]}%.` : "Your QPV is under 250, so there is no bonus yet."}` };
+}
+
+/** The stages from the plan: what each needs every month, and the bonus level it earns. */
+export const STAGES = [
+  { name: "Distributor", need: 100, needLabel: "100 PPV", rate: "3%", from: "bonus from 250 QPV" },
+  { name: "Manager", need: 500, needLabel: "500 QPV + 100 PPV", rate: "5%", from: "" },
+  { name: "Senior Manager", need: 1000, needLabel: "1,000 QPV + 100 PPV", rate: "10%", from: "" },
+  { name: "Executive Manager", need: 2000, needLabel: "2,000 QPV + 100 PPV", rate: "15% to 20%", from: "" },
+  { name: "Director", need: 4000, needLabel: "4,000 QPV + 100 PPV", rate: "25%", from: "after a Qualified Executive Manager month" },
+] as const;

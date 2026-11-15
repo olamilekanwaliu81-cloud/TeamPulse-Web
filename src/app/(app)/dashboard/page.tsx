@@ -10,7 +10,7 @@ import { monthStatus } from "@/lib/ranks";
 import { ago } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icons";
-import { ColumnChart, Donut, PanelTitle, StatCard, StatusPill, WeekPanel, greeting } from "@/components/ui";
+import { ColumnChart, Donut, PanelTitle, RankLadder, StatCard, StatusPill, WeekPanel, greeting } from "@/components/ui";
 import { KEY_COLOR } from "@/lib/calendar";
 import { resendInvite } from "@/app/actions/team";
 import { monthStats, recommendations } from "@/lib/stats";
@@ -62,8 +62,8 @@ export default async function Dashboard() {
   const claims = (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready");
   const st = (id: string) => { const m = byId.get(id)!, s = stats.get(id); return monthStatus({ role: m.role, rank: m.rank, ppv: s?.ppv ?? null, qpv: s?.qpv ?? null }); };
   const qualified = active.filter((m) => st(m.id).state === "qualified").length;
-  const titleOnly = active.filter((m) => st(m.id).state === "title_only").length;
-  const unreported = active.length - qualified - titleOnly;
+  const titleOnly = active.filter((m) => { const s = st(m.id); return s.state === "title_only" && !s.noPpv; }).length;
+  const noBonus = active.length - qualified - titleOnly; // under 100 PPV, or no PPV yet
   const feed = await db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
     select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 6`;
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date()));
@@ -101,12 +101,12 @@ export default async function Dashboard() {
         <>
           <div className="statrow">
             <StatCard icon="users" tone="blue" label="Team members" value={members.length} note={`${active.length} active · ${invited.length} invited`} />
-            <StatCard icon="circleCheck" tone="green" label="Qualified this month" value={qualified} note={`${titleOnly} title only · ${unreported} not reported`} />
+            <StatCard icon="circleCheck" tone="green" label="Qualified this month" value={qualified} note={`${titleOnly} title only · ${noBonus} no bonus`} />
             <StatCard icon="clock" tone="orange" label="Check-in completion" value={`${pct}%`} note="Target 75 to 80%" />
             <StatCard icon="star" tone="purple" label="Waiting for you" value={recs.length + claims.length} note={`${recs.length} rank-ups · ${claims.length} sign-ups`} />
           </div>
 
-          <p className="rule"><b>How the month works:</b> a title is earned once and kept. Every month a member needs <b>100 PPV</b> and the <b>QPV of their title</b> to be <b>Qualified</b>. A month without it they keep the title but are <b>Title only</b>, and earn from the bonus chart by that month&apos;s QPV.</p>
+          <p className="rule"><b>How the month works:</b> a title is earned once and kept. <b>Qualified</b> means 100 PPV and the QPV of the title that month. With 100 PPV but less QPV, the member is <b>Title only</b>: they keep the title and earn the bonus level their QPV reaches (a Senior Manager with 500 to 999 QPV earns 5%). Under <b>100 PPV</b> there is <b>no bonus and no status</b>, but the title stays.</p>
 
           {attention && (
             <div className="dgrid">
@@ -152,10 +152,11 @@ export default async function Dashboard() {
             </section>
             <section className="card c4"><PanelTitle>Team this month</PanelTitle>
               <Donut label="active members" total={active.length}
-                parts={[{ value: qualified, color: "var(--green)", label: "Qualified" }, { value: titleOnly, color: "var(--orange)", label: "Title only" }, { value: unreported, color: "#C9D2E8", label: "Not reported yet" }]} />
+                parts={[{ value: qualified, color: "var(--green)", label: "Qualified" }, { value: titleOnly, color: "var(--orange)", label: "Title only" }, { value: noBonus, color: "#F27A7A", label: "No bonus (PPV under 100 or none)" }]} />
             </section>
             <section className="card c4"><PanelTitle>This week</PanelTitle><WeekPanel today={T} /></section>
           </div>
+          <section className="card"><PanelTitle>The stages</PanelTitle><p className="sub" style={{ margin: "-6px 0 10px" }}>What each stage needs every month to be Qualified, and the bonus level it earns.</p><RankLadder /></section>
 
           <div className="dgrid">
             <section className="card c6"><PanelTitle href="/team" link="View all">Team members</PanelTitle>

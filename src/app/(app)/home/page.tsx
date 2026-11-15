@@ -5,10 +5,10 @@ import { answersOf, dropOf } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, monthOccs, parseDay, progress, stateOf } from "@/lib/checkins";
 import { teamMembers, teamName } from "@/lib/users";
 import { RANKS, firstName, rankName } from "@/lib/rules";
-import { monthStatus, nextRank } from "@/lib/ranks";
+import { monthStatus, nextRank, statusText } from "@/lib/ranks";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
-import { PanelTitle, StatCard, WeekPanel, greeting } from "@/components/ui";
+import { PanelTitle, RankLadder, StatCard, WeekPanel, greeting } from "@/components/ui";
 
 export const metadata = { title: "Home" };
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -24,6 +24,7 @@ export default async function Home() {
   const ppvAns = mine.find((a) => a.occ === occs.find((o) => o.key === "ppv")!.id)?.answers;
   const ppv = typeof ppvAns?.ppv === "number" ? ppvAns.ppv : null, qpv = typeof ppvAns?.qpv === "number" ? ppvAns.qpv : null;
   const status = monthStatus({ role: u.role, rank: u.rank, ppv, qpv });
+  const tx = statusText({ rank: u.rank, ppv, qpv }, status);
   const next = nextRank(u.rank), need = RANKS[u.rank].qpv;
   const pctN = next && qpv != null ? Math.min(100, Math.round((qpv / next.qpv) * 100)) : 0;
   const drop = mine.map(dropOf).filter((d): d is NonNullable<typeof d> => !!d && d.date >= T).sort((a, b) => (a.date < b.date ? -1 : 1))[0];
@@ -39,19 +40,14 @@ export default async function Home() {
 
       <div className="statrow">
         <StatCard icon="star" tone="blue" label="My title" value={rankName(u.rank)} note={u.rank >= 1 ? "Kept for good once earned" : "Your first title is Manager"} />
-        <StatCard icon="circleCheck" tone={status.state === "qualified" ? "green" : status.state === "title_only" ? "orange" : "purple"} label="This month" value={status.state === "qualified" ? "Qualified" : status.state === "title_only" ? "Title only" : "Not reported"} note={status.state === "qualified" ? (status.rate ? `Bonus rate ${status.rate}%` : "You met this month's targets") : status.state === "title_only" ? "Targets not met yet" : "Answer the 14th check-in"} />
+        <StatCard icon="circleCheck" tone={status.state === "qualified" ? "green" : status.state === "title_only" ? (status.noPpv ? "red" : "orange") : "purple"} label="This month" value={status.state === "qualified" ? "Qualified" : status.state === "title_only" ? (status.noPpv ? "No bonus" : "Title only") : "No PPV yet"} note={status.state === "qualified" ? (status.rate ? `Bonus level ${status.rate}%` : "You met this month's targets") : status.state === "title_only" ? (status.noPpv ? "Under 100 PPV" : status.rate ? `Earning ${status.rate}% this month` : "QPV under 250") : "Answer the 14th check-in"} />
         <StatCard icon="bolt" tone="purple" label="My PPV" value={ppv == null ? "—" : ppv.toLocaleString("en-US")} note="100 needed every month" />
         <StatCard icon="users" tone="orange" label="My team QPV" value={qpv == null ? "—" : qpv.toLocaleString("en-US")} note={u.rank >= 1 ? `${need.toLocaleString("en-US")} needed for ${rankName(u.rank)}` : "Includes your own PPV"} />
       </div>
 
-      {status.state === "title_only" && (
-        <div className="notice bad" role="status" style={{ background: "var(--orange-soft)", borderColor: "var(--orange)" }}>
-          <b style={{ color: "var(--warn)" }}>{u.rank >= 1 ? `This month you hold the ${rankName(u.rank)} title, but you are not Qualified yet.` : "You are not Qualified yet this month."}</b>
-          <p style={{ margin: "4px 0 0" }}>{status.why.join(". ")}. {status.rate ? `At this month's QPV your bonus rate is ${status.rate}%.` : "Without 100 PPV there is no bonus this month."} Reach your targets before the month ends to be Qualified.{u.rank >= 1 ? " Your title does not change." : ""}</p>
-        </div>
-      )}
-      {status.state === "qualified" && u.rank >= 1 && <p className="rule"><b>Qualified</b> this month at <b>{rankName(u.rank)}</b>. Keep 100 PPV and {need.toLocaleString("en-US")} QPV every month to stay Qualified.</p>}
-      {status.state === "unreported" && <p className="rule">Every month you need <b>100 PPV</b>{u.rank >= 1 ? <> and <b>{need.toLocaleString("en-US")} QPV</b> for your title</> : null} to be <b>Qualified</b>. Report your numbers in the 14th check-in. A month without them, you keep your title but are <b>Title only</b>.</p>}
+      <div className={status.state === "qualified" ? "rule" : "notice bad"} role="status" style={status.state === "title_only" && !status.noPpv ? { background: "var(--orange-soft)", borderColor: "var(--orange)" } : status.state === "unreported" ? { background: "var(--accent-soft)", borderColor: "var(--accent)" } : undefined}>
+        <b style={{ color: tx.tone === "good" ? "var(--accent)" : tx.tone === "warn" ? "var(--warn)" : tx.tone === "bad" ? "var(--bad)" : "var(--accent)" }}>{tx.headline}.</b> {tx.detail}
+      </div>
 
       <div className="dgrid">
         <section className="card c5"><PanelTitle href="/checkins" link="Open">Check-ins this month</PanelTitle>
@@ -78,6 +74,8 @@ export default async function Home() {
             : <div className="empty">Report your payout in the 10th check-in and it shows here.</div>}
         </section>
       </div>
+
+      <section className="card" style={{ maxWidth: 720 }}><PanelTitle>The stages</PanelTitle><p className="sub" style={{ margin: "-6px 0 10px" }}>What each stage needs every month to be Qualified, and the bonus level it earns.</p><RankLadder rank={u.rank} /></section>
 
       <section className="card" style={{ maxWidth: 720 }}>
         <div className="inline"><Avatar user={u} size="lg" />

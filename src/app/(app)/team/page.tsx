@@ -24,14 +24,15 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
   const stats = await monthStats(u.teamId, all, await today());
   const ids = new Set(list.map((m) => m.id));
   const byId = new Map(all.map((m) => [m.id, m]));
+  const stOf = (m: User) => monthStatus({ role: m.role, rank: m.rank, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null });
+  const treeMonth = (m: User): "qualified" | "title_only" | "no_bonus" | "unreported" => { const s = stOf(m); return s.state === "title_only" ? (s.noPpv ? "no_bonus" : "title_only") : s.state === "qualified" ? "qualified" : "unreported"; };
   const kids = (id: string) => list.filter((m) => m.sponsorId === id);
-  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null, month: m.status === "active" ? monthStatus({ role: m.role, rank: m.rank, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null }).state : "unreported", children: kids(m.id).map(node) });
+  const node = (m: User): TreeNode => ({ id: m.id, name: m.name, photo: m.photo, rank: rankName(m.rank), status: m.status, tpId: m.tpId, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null, month: m.status === "active" ? treeMonth(m) : "unreported", children: kids(m.id).map(node) });
   // people whose sponsor is outside the list hang directly under the viewer
   const top = list.filter((m) => !m.sponsorId || !ids.has(m.sponsorId));
   const root: TreeNode = { ...node(u), rank: u.role === "admin" ? "Team leader" : rankName(u.rank), children: top.map(node) };
   const tree = view === "tree" && !q;
   const shown = q ? list.filter((m) => `${m.name} ${m.tpId} ${m.neoId}`.toLowerCase().includes(q)) : list;
-  const stOf = (m: User) => monthStatus({ role: m.role, rank: m.rank, ppv: stats.get(m.id)?.ppv ?? null, qpv: stats.get(m.id)?.qpv ?? null });
 
   return (
     <>

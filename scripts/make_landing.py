@@ -4,7 +4,7 @@
 The real app serves it at "/" (see next.config.ts). Changes made here, so the landing source stays one file:
 - links go to the real pages: /signin and /register
 - the sign-in card on the page sends the TeamPulse ID to /signin
-- the Mac and Windows download section is removed (the downloads are still the prototype)
+- the Mac and Windows downloads are served from web/public/downloads
 - prototype wording is replaced
 """
 import pathlib
@@ -18,11 +18,12 @@ html = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         "<style>body{margin:0}[hidden]{display:none!important}</style></head><body>\n" + src + "\n</body></html>\n")
 
-# 2. remove the download section and links to it
-html = re.sub(r'<section id="download">.*?</section>\s*', "", html, flags=re.S)
-html = re.sub(r'<a [^>]*data-dl-link[^>]*>.*?</a>', "", html, flags=re.S)
-html = re.sub(r'<p class="sub-link" data-dl-link>.*?</p>', "", html, flags=re.S)
-html = re.sub(r'/\* downloads: recommend.*?\}\)\(\);\n', "", html, flags=re.S)
+# 2. downloads: the zips live in web/public/downloads and are served at /downloads/
+def size(name, fallback):
+    f = ROOT / "web" / "public" / "downloads" / name
+    return f"{max(1, round(f.stat().st_size / 1024))} KB" if f.exists() else fallback
+html = html.replace("{{MAC_SIZE}}", size("TeamPulse-mac.zip", "about 200 KB")).replace("{{WIN_SIZE}}", size("TeamPulse-windows.zip", "about 100 KB"))
+html = html.replace('href="downloads/', 'href="/downloads/')
 
 # 3. links
 html = html.replace('href="app.html#register"', 'href="/register"').replace('href="app.html"', 'href="/signin"')
