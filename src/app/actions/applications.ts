@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { INVITE_DAYS, applicationById, inviteByToken, isLive, newInviteToken } from "@/lib/applications";
-import { appUrl, sendMail } from "@/lib/mail";
+import { appUrl, notDelivered, sendMail } from "@/lib/mail";
 import { esc } from "@/lib/emails";
-import { RANKS, firstName, validEmail, validNeoId } from "@/lib/rules";
+import { MAX_BULK, RANKS, firstName, parseEmails, validEmail, validNeoId } from "@/lib/rules";
 import { logAudit, userById } from "@/lib/users";
 import type { FormState } from "./auth";
 
@@ -22,25 +22,36 @@ export async function createInvite(_: FormState, f: FormData): Promise<FormState
     if (!sponsor || sponsor.teamId !== leader.teamId || sponsor.status === "inactive") return { error: "Choose a sponsor from your team." };
   }
   const kind = text(f, "kind") === "existing" ? "existing" : "new";
+  const { emails, bad } = parseEmails(text(f, "emails"));
+  if (emails.length > MAX_BULK) return { error: `Up to ${MAX_BULK} email addresses at a time. You entered ${emails.length}.` };
   const note = text(f, "note").slice(0, 120);
   const token = newInviteToken();
   await db()`insert into invites (team_id, created_by, token, sponsor_id, note, kind, expires_at)
              values (${leader.teamId}, ${leader.id}, ${token}, ${sponsor?.id ?? null}, ${note}, ${kind}, now() + ${INVITE_DAYS + " days"}::interval)`;
   await logAudit(leader.teamId, leader.id, "invite.created", {});
-  const email = text(f, "email");
   const link = `${appUrl()}/join/${token}`;
-  if (email) {
-    if (!validEmail(email)) return { error: "That email address does not look right." };
-    await sendMail({
-      to: email, name: "", subject: `${firstName(leader.name)} invites you to join the team`,
+  revalidatePath("/signups");
+  if (!emails.length && !bad.length) return { ok: "Link made. Copy it below and send it." };
+  const taken = new Set((await db()<{ e: string }[]>`select lower(email) as e from users where lower(email) in ${db()(emails.length ? emails : [""])}`).map((r) => r.e));
+  const todo = emails.filter((e) => !taken.has(e));
+  let sent = 0;
+  const failed: string[] = [];
+  for (const [n, to] of todo.entries()) {
+    if (n) await new Promise((r) => setTimeout(r, 600)); // the email service allows about two a second
+    const r = await sendMail({
+      to, name: "", subject: kind === "existing" ? `${firstName(leader.name)} invites you to TeamPulse` : `${firstName(leader.name)} invites you to join the team`,
       html: kind === "existing"
         ? `<p>Hello, ${esc(leader.name)} now uses TeamPulse for the team's monthly check-ins. You are already a distributor, so there is nothing new to buy. Please add your details once. It takes about a minute.</p><p>The link works for ${INVITE_DAYS} days.</p>`
         : `<p>Hello, ${esc(leader.name)} would like to welcome you to the team. Please fill in your details. It takes about a minute.</p><p>The link works for ${INVITE_DAYS} days.</p>`,
       ctaLabel: "Fill in my details", ctaUrl: link,
     });
+    if (notDelivered(r.status)) failed.push(to); else sent++;
   }
-  revalidatePath("/signups");
-  return { ok: email ? "Link made and emailed. You can also copy it below." : "Link made. Copy it below and send it." };
+  const parts = [`Link made. Emailed ${sent} ${sent === 1 ? "person" : "people"}.`];
+  if (taken.size) parts.push(`Skipped ${taken.size} already on the team: ${[...taken].join(", ")}.`);
+  if (bad.length) parts.push(`These do not look like email addresses: ${bad.join(", ")}.`);
+  if (failed.length) parts.push(`Could not email: ${failed.join(", ")}. Send them the link yourself.`);
+  return { ok: parts.join(" ") + " You can also copy the link below." };
 }
 
 export async function revokeInvite(f: FormData) {

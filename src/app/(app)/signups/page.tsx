@@ -12,6 +12,7 @@ import { appUrl } from "@/lib/mail";
 import { CopyLink } from "@/components/CopyLink";
 
 export const metadata = { title: "Sign-ups" };
+export const maxDuration = 60; // emailing a batch takes a few seconds
 
 export default async function Signups() {
   const u = await requireUser();
@@ -70,7 +71,7 @@ export default async function Signups() {
               <select id="iv-kind" name="kind" defaultValue="new"><option value="new">A new sign-up</option><option value="existing">An existing distributor</option></select></div>
             <div className="field"><label htmlFor="iv-sp">Suggested sponsor (optional)</label>
               <select id="iv-sp" name="sponsor" defaultValue=""><option value="">I will choose later</option>{choices.map((m) => <option key={m.id} value={m.id}>{m.name}{m.id === u.id ? " (you)" : ""}</option>)}</select></div>
-            <div className="field"><label htmlFor="iv-em">Email it to them (optional)</label><input id="iv-em" name="email" type="email" autoComplete="off" /></div>
+            <div className="field"><label htmlFor="iv-em">Email it to them (optional)</label><textarea id="iv-em" name="emails" rows={3} autoComplete="off" placeholder="One address per line, or separated by commas" /><span className="hint">Up to 25 at a time. Everyone gets the same link.</span></div>
           </div>
         </ActionForm>
         {invites.length > 0 && (

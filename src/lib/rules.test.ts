@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeTpId, normalizeTpId, strongPassword, validEmail, validNeoId, validTpId, initials, rankName } from "./rules";
+import { makeTpId, normalizeTpId, parseEmails, strongPassword, validEmail, validNeoId, validTpId, initials, rankName } from "./rules";
 
 describe("rules", () => {
   it("accepts NeoLife IDs like 063-9262173 only", () => {
@@ -27,5 +27,21 @@ describe("rules", () => {
     expect(validEmail("a@b")).toBe(false);
     expect(initials("Abdul Malik Ajao")).toBe("AM");
     expect(rankName(2)).toBe("Senior Manager");
+  });
+});
+
+describe("parseEmails", () => {
+  it("splits on lines, commas and semicolons, lowercases and drops duplicates", () => {
+    const r = parseEmails("A@x.com, b@x.com;\nC@X.com  a@x.com");
+    expect(r.emails).toEqual(["a@x.com", "b@x.com", "c@x.com"]);
+    expect(r.bad).toEqual([]);
+  });
+  it("keeps what is not an email apart, and reads <name@x.com>", () => {
+    const r = parseEmails("bob, <ok@x.com>, nope@");
+    expect(r.emails).toEqual(["ok@x.com"]);
+    expect(r.bad).toEqual(["bob", "nope@"]);
+  });
+  it("is empty for an empty box", () => {
+    expect(parseEmails("  \n ")).toEqual({ emails: [], bad: [] });
   });
 });

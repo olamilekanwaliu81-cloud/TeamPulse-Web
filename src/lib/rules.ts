@@ -34,3 +34,18 @@ export const initials = (name: string) =>
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
 export const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 86_400_000);
+
+export const MAX_BULK = 25;
+
+/** Email addresses typed or pasted in one box, split on spaces, commas, semicolons and new lines. Duplicates are dropped. */
+export function parseEmails(raw: string): { emails: string[]; bad: string[] } {
+  const seen = new Set<string>();
+  const emails: string[] = [], bad: string[] = [];
+  for (const part of raw.split(/[\s,;]+/)) {
+    const e = part.trim().replace(/^<|>$/g, "").toLowerCase();
+    if (!e || seen.has(e)) continue;
+    seen.add(e);
+    (validEmail(e) ? emails : bad).push(e);
+  }
+  return { emails, bad };
+}
