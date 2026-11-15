@@ -93,7 +93,3 @@ A team leader can make a sign-up link on the Sign-ups page (`/signups`). The new
 ## When someone does not qualify for a month
 
 A member who is inactive, has under 100 PPV, or reported no PPV after the PPV question closed (the 17th) does not qualify as a Distributor that month. The people they sponsored are then counted under the nearest upline who did qualify, until they qualify again (`effectiveSponsors` in `src/lib/ranks.ts`). The tree and system QPV follow this. Their real sponsor never changes in the database.
-
-## WhatsApp (tap to send)
-
-There is no automatic WhatsApp sending. Buttons open WhatsApp (`wa.me`) with the message already written, and the leader presses send from their own phone: "Share on WhatsApp" on sign-up links, "WhatsApp" next to members who have not replied, "Message on WhatsApp" on a member's page and "Send their ID on WhatsApp" after adding someone. Phone numbers are turned into international digits (Nigerian numbers starting with 0 become 234...) in `src/lib/whatsapp.ts`. Automatic sending would need a Meta WhatsApp Business account and approved message templates.

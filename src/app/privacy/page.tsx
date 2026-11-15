@@ -16,7 +16,7 @@ export default function Privacy() {
       <h2>What we keep</h2>
       <ul>
         <li><b>Who you are:</b> your name, email address, NeoLife ID, TeamPulse ID, sponsor, title and the date you joined.</li>
-        <li><b>What you add yourself:</b> phone number, city, short bio and profile photo. These are optional. If you give a phone number, your team leader may use it to message you on WhatsApp. TeamPulse does not send WhatsApp messages itself: your leader opens WhatsApp from TeamPulse and sends the message from their own phone, so WhatsApp&rsquo;s own terms and privacy notice apply to that chat.</li>
+        <li><b>What you add yourself:</b> phone number, city, short bio and profile photo. These are optional.</li>
         <li><b>Your monthly check-ins:</b> your answers about your plan, PPV, earnings, payment and sign-ups, and the PPV and QPV figures worked out from them.</li>
         <li><b>Team activity:</b> the team feed, the emails sent to you and when, and a record of important actions such as password resets, so mistakes can be traced.</li>
         <li><b>Your password:</b> only as a scrambled (hashed) value. Nobody, including your leader, can read it.</li>
