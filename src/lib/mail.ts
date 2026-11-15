@@ -67,5 +67,5 @@ export function wrap(m: Mail): string {
   return `<!doctype html><html><body style="margin:0;background:#EEF0F8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0F1B44">
   <div style="max-width:560px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:20px;padding:28px">
   <p style="font-weight:800;font-size:18px;margin:0 0 18px;color:#2F62F5">TeamPulse</p>${m.html}${btn}
-  <p style="font-size:12px;color:#6B7799;margin-top:26px">TeamPulse · monthly check-ins for your team</p></div></div></body></html>`;
+  <p style="font-size:12px;color:#6B7799;margin-top:26px">TeamPulse · monthly check-ins for your team · <a href="${appUrl()}/privacy" style="color:#6B7799">Privacy notice</a></p></div></div></body></html>`;
 }
