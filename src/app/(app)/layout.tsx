@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth";
 import { rankName } from "@/lib/rules";
 import { teamMembers, teamName, scopeFor } from "@/lib/users";
-import { today } from "@/lib/clock";
+import { TZ, realToday, today } from "@/lib/clock";
+import { Icon } from "@/components/Icons";
 import { answeredSets } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, openToday, parseDay, teamLine } from "@/lib/checkins";
 import { teamClaims, claimsBy } from "@/lib/claims";
@@ -49,6 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? [{ href: "/dashboard", label: "Dashboard", icon: "dashboard" }, { href: "/team", label: "Team", icon: "team" }, { href: "/signups", label: "Sign-ups", icon: "signups", badge: claims.length }, { href: "/profile", label: "Settings", icon: "profile" }]
     : [{ href: "/home", label: "Home", icon: "dashboard" }, { href: "/checkins", label: "Check-ins", icon: "checkins" }, { href: "/signups", label: "Report a sign-up", icon: "signups" }, ...(u.rank >= 2 ? [{ href: "/team", label: "My team", icon: "team" } as NavItem] : []), { href: "/profile", label: "My profile", icon: "profile" }];
 
+  const canSearch = u.role === "admin" || u.rank >= 2;
   const { y, m } = parseDay(T);
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 
@@ -57,12 +59,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="side">
         <Brand />
         <NavLinks items={nav} />
-        <div className="cyclecard">This month<b>1 {MONTHS[m]} – {last} {MONTHS[m]} {y}</b>NeoLife counts PV by the normal calendar month.<br /><br />{teamLine(T, monthLabel)}</div>
+        <div className="cyclecard"><span className="cc-ic"><Icon name="calendar" /></span>This month<b>1 {MONTHS[m]} – {last} {MONTHS[m]} {y}</b>NeoLife counts PV by the normal calendar month. Every month you need 100 PPV and your title&apos;s QPV to stay qualified.<br /><br />{teamLine(T, monthLabel)}</div>
       </aside>
       <div className="content">
         <header className="top">
-          <label className="search" style={{ visibility: "hidden" }} />
+          {canSearch ? (
+            <form className="search" action="/team" role="search">
+              <Icon name="search" />
+              <input name="q" type="search" placeholder="Search members, TeamPulse ID or NeoLife ID" aria-label="Search members" />
+            </form>
+          ) : <span className="search" style={{ visibility: "hidden" }} />}
           <TopBar
+            clock={{ today: T, tz: TZ, isTest: T !== realToday() }}
             notices={notices}
             person={{ id: u.id, name: u.name, photo: u.photo, tpId: u.tpId, role: u.role === "admin" ? "Team leader" : rankName(u.rank), subtitle: u.role === "admin" ? `Team leader · ${team}` : rankName(u.rank) }}
           />

@@ -28,7 +28,7 @@ export function PpvFields({ a }: { a: Record<string, unknown> }) {
     <>
       <div className="field"><label htmlFor="p-ppv">Your PPV this month</label>
         <input id="p-ppv" name="ppv" type="number" min="0" value={ppv} onChange={(e) => setPpv(e.target.value)} />
-        <span className={`hint ${v == null ? "" : v < 100 ? "bad" : "good"}`}>{v == null ? "NeoLife asks for 100 PPV to stay active." : v < 100 ? `${v} PPV is under the 100 minimum. You will not be active for bonuses this month.` : `${v} PPV. You meet the 100 minimum.`}</span></div>
+        <span className={`hint ${v == null ? "" : v < 100 ? "bad" : "good"}`}>{v == null ? "NeoLife asks for 100 PPV to stay active." : v < 100 ? `${v} PPV is under the 100 needed. You would be "Title only" this month, with no bonus.` : `${v} PPV. You meet the 100 needed.`}</span></div>
       <div className="field"><label htmlFor="p-qpv">Your team&apos;s QPV</label>
         <div className="inline"><input id="p-qpv" name="qpv" type="number" min="0" defaultValue={n(a.qpv)} disabled={none} />
           <label className="inline" style={{ fontWeight: 400 }}><input name="none" type="checkbox" checked={none} onChange={(e) => setNone(e.target.checked)} /> None yet, I have no downline</label></div>

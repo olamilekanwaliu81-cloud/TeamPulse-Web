@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recommend, systemQpv } from "./ranks";
+import { monthStatus, recommend, svbRate, systemQpv } from "./ranks";
 
 const m = (o: Partial<Parameters<typeof recommend>[0]> = {}) => ({ role: "member", status: "active", rank: 0, ppv: 136, qpv: 600, ...o });
 
@@ -43,5 +43,33 @@ describe("system QPV", () => {
     expect(systemQpv(people, new Map()).get("a")).toBe(0);
     const loop = [{ ...people[1], sponsorId: "c" }, { ...people[2], sponsorId: "b" }];
     expect(systemQpv(loop, new Map([["b", 1], ["c", 2]])).get("b")).toBe(3);
+  });
+});
+
+describe("monthly status", () => {
+  it("is qualified with 100 PPV and the QPV of the title", () => {
+    expect(monthStatus({ role: "member", rank: 1, ppv: 120, qpv: 500 })).toEqual({ state: "qualified", rate: 5 });
+    expect(monthStatus({ role: "member", rank: 2, ppv: 100, qpv: 1500 })).toEqual({ state: "qualified", rate: 10 });
+  });
+  it("keeps the title but is title only when the month falls short", () => {
+    const low = monthStatus({ role: "member", rank: 1, ppv: 120, qpv: 400 });
+    expect(low.state).toBe("title_only");
+    expect(low.state === "title_only" && low.why[0]).toMatch(/QPV 400 is under the 500/);
+    const noPpv = monthStatus({ role: "member", rank: 2, ppv: 80, qpv: 1500 });
+    expect(noPpv.state === "title_only" && noPpv.rate).toBeNull(); // no bonus at all without 100 PPV
+  });
+  it("only needs 100 PPV for a Distributor", () => {
+    expect(monthStatus({ role: "member", rank: 0, ppv: 100, qpv: 0 }).state).toBe("qualified");
+    expect(monthStatus({ role: "member", rank: 0, ppv: 99, qpv: 900 }).state).toBe("title_only");
+  });
+  it("says unreported when no PPV was given", () => {
+    expect(monthStatus({ role: "member", rank: 1, ppv: null, qpv: null })).toEqual({ state: "unreported" });
+  });
+  it("follows the bonus chart: 250 gives 3%, 4,000 gives 25%, and nothing below 250 or under 100 PPV", () => {
+    expect(svbRate(100, 249)).toBeNull();
+    expect(svbRate(100, 250)).toBe(3);
+    expect(svbRate(100, 999)).toBe(5);
+    expect(svbRate(100, 4000)).toBe(25);
+    expect(svbRate(99, 4000)).toBeNull();
   });
 });

@@ -61,11 +61,11 @@ export async function latestMailStatus(emails: string[], subjectPrefix: string):
 /** The HTML that is actually sent: the message, a button, and a plain-text link under it. */
 export function wrap(m: Mail): string {
   const btn = m.ctaLabel && m.ctaUrl
-    ? `<p style="margin:22px 0"><a href="${m.ctaUrl}" style="background:#6A5AE0;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;display:inline-block">${m.ctaLabel}</a></p>
-       <p style="font-size:13px;color:#686E8E">If the button does not work, copy this link into your browser:<br><span style="word-break:break-all">${m.ctaUrl}</span></p>`
+    ? `<p style="margin:22px 0"><a href="${m.ctaUrl}" style="background:#2F62F5;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;display:inline-block">${m.ctaLabel}</a></p>
+       <p style="font-size:13px;color:#6B7799">If the button does not work, copy this link into your browser:<br><span style="word-break:break-all">${m.ctaUrl}</span></p>`
     : "";
-  return `<!doctype html><html><body style="margin:0;background:#EEF0F8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#171C3F">
+  return `<!doctype html><html><body style="margin:0;background:#EEF0F8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0F1B44">
   <div style="max-width:560px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:20px;padding:28px">
-  <p style="font-weight:800;font-size:18px;margin:0 0 18px;color:#6A5AE0">TeamPulse</p>${m.html}${btn}
-  <p style="font-size:12px;color:#686E8E;margin-top:26px">TeamPulse · monthly check-ins for your team</p></div></div></body></html>`;
+  <p style="font-weight:800;font-size:18px;margin:0 0 18px;color:#2F62F5">TeamPulse</p>${m.html}${btn}
+  <p style="font-size:12px;color:#6B7799;margin-top:26px">TeamPulse · monthly check-ins for your team</p></div></div></body></html>`;
 }

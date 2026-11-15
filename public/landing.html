@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}[hidden]{display:none!important}</style></head><body>
 <title>TeamPulse</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' fill='%236A5AE0'/%3E%3Cpath d='M3 15h5l3-8 5 14 3-7h6' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' fill='%232F62F5'/%3E%3Cpath d='M3 15h5l3-8 5 14 3-7h6' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -9,35 +9,16 @@
 /* Layout: sticky nav, hero with a product screen and floating cards, a month-by-month calendar,
    feature cards with colored icon tiles, a sign-in band, a leaders section, FAQ, dark footer. */
 :root{
-  --bg:#F5F4FD; --surface:#FFFFFF; --surface2:#F0EFFA; --ink:#171C3F; --muted:#5F6586; --line:#E4E5F3;
-  --accent:#6A5AE0; --accent-ink:#FFFFFF; --accent-soft:#E9E6FB;
-  --orange:#D9740F; --orange-soft:#FDEBD6; --teal:#168F7A; --teal-soft:#D6F2EA; --blue:#3A78E4; --blue-soft:#DEEAFE; --pink:#D6416C; --pink-soft:#FBDDE6;
-  --navy:#171C3F; --navy-ink:#FFFFFF; --foot:#171C3F; --foot-ink:#C9CCE6;
-  --good:#1B8550; --good-soft:#DAF2E4; --bad:#C0352D;
-  --shadow:0 1px 2px rgba(23,28,63,.05),0 12px 32px rgba(23,28,63,.08);
+  color-scheme:light;
+  --bg:#F4F7FE; --surface:#FFFFFF; --surface2:#F3F6FC; --ink:#0F1B44; --muted:#5F6B8F; --line:#E6EBF5;
+  --accent:#2F62F5; --accent-ink:#FFFFFF; --accent-soft:#E8EEFF;
+  --orange:#E8940F; --orange-soft:#FFF1D8; --teal:#1FA564; --teal-soft:#DDF6EA; --blue:#2F62F5; --blue-soft:#E8EEFF; --pink:#7C5CFF; --pink-soft:#EEE9FF;
+  --navy:#0F1B44; --navy-ink:#FFFFFF; --foot:#0F1B44; --foot-ink:#C9D2EA;
+  --good:#168A52; --good-soft:#DDF6EA; --bad:#D63A3A;
+  --shadow:0 1px 2px rgba(15,27,68,.04),0 12px 32px rgba(15,27,68,.07);
   --display:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
   --body:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0D0F21; --surface:#171A34; --surface2:#1E2242; --ink:#ECEEFB; --muted:#A0A6CB; --line:#2B3058;
-    --accent:#8F83FF; --accent-ink:#10112A; --accent-soft:#2B2862;
-    --orange:#FFAA52; --orange-soft:#3C2B15; --teal:#4FD6BE; --teal-soft:#143A30; --blue:#7DB0FF; --blue-soft:#1C2E54; --pink:#FF8FAE; --pink-soft:#4A2233;
-    --navy:#ECEEFB; --navy-ink:#10112A; --foot:#0A0B1A; --foot-ink:#A0A6CB;
-    --good:#5CC680; --good-soft:#163824; --bad:#F2887F;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.3);
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0D0F21; --surface:#171A34; --surface2:#1E2242; --ink:#ECEEFB; --muted:#A0A6CB; --line:#2B3058;
-  --accent:#8F83FF; --accent-ink:#10112A; --accent-soft:#2B2862;
-  --orange:#FFAA52; --orange-soft:#3C2B15; --teal:#4FD6BE; --teal-soft:#143A30; --blue:#7DB0FF; --blue-soft:#1C2E54; --pink:#FF8FAE; --pink-soft:#4A2233;
-  --navy:#ECEEFB; --navy-ink:#10112A; --foot:#0A0B1A; --foot-ink:#A0A6CB;
-  --good:#5CC680; --good-soft:#163824; --bad:#F2887F;
-  --shadow:0 1px 2px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.3);
-  color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -67,6 +48,9 @@ header.nav.stuck{border-bottom-color:var(--line)}
 .links a{text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
 .links a:hover{color:var(--ink);border-bottom-color:var(--accent)}
 .nav-cta{display:flex;gap:10px;align-items:center}
+.nowpill{display:inline-flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.82rem;font-weight:700;color:var(--ink);box-shadow:var(--shadow);white-space:nowrap}
+.nowpill b{color:var(--accent);font-variant-numeric:tabular-nums}
+@media (max-width:1100px){.nowpill{display:none}}
 .btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform .15s,box-shadow .15s}
 .btn .ic{width:18px;height:18px}
 .btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 35%,transparent)}
@@ -274,7 +258,7 @@ footer .links a{color:var(--foot-ink)}
 <header class="nav" id="nav">
   <div class="in nav-in">
     <a class="brand" href="#top" data-go="top"><svg viewBox="0 0 28 28" aria-hidden="true"><use href="#i-pulse"/></svg>TeamPulse</a>
-    <nav class="links" aria-label="Page sections"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#how" data-go="how">How it works</a><a href="#leaders" data-go="leaders">For leaders</a><a href="#faq" data-go="faq">Questions</a></nav>
+    <span class="nowpill" id="nowpill" aria-live="off"></span><nav class="links" aria-label="Page sections"><a href="#month" data-go="month">A month</a><a href="#features" data-go="features">Features</a><a href="#how" data-go="how">How it works</a><a href="#leaders" data-go="leaders">For leaders</a><a href="#faq" data-go="faq">Questions</a></nav>
     <div class="nav-cta"><a class="btn ghost sm" href="/signin">Try the app</a><a class="btn primary sm" href="#join" data-go="join">Sign in</a></div>
   </div>
 </header>
@@ -368,7 +352,7 @@ footer .links a{color:var(--foot-ink)}
     <div class="feats">
       <article class="feat"><span class="tile t-acc"><svg class="ic"><use href="#i-cal"/></svg></span><h3>Check-ins on a schedule</h3><p>Questions go out on their dates and reminders follow up, so you stop asking the same thing every month.</p></article>
       <article class="feat"><span class="tile t-tl"><svg class="ic"><use href="#i-user"/></svg></span><h3>A profile for everyone</h3><p>Every answer is saved with the month it belongs to. Members see their own history and progress.</p></article>
-      <article class="feat"><span class="tile t-or"><svg class="ic"><use href="#i-rank"/></svg></span><h3>Rank progress</h3><p>PPV and QPV are checked against the NeoLife plan, and TeamPulse recommends a rank-up when someone reaches a threshold.</p></article>
+      <article class="feat"><span class="tile t-or"><svg class="ic"><use href="#i-rank"/></svg></span><h3>Rank progress</h3><p>PPV and QPV are checked against the NeoLife plan every month. You see who is Qualified and who is Title only, and TeamPulse recommends a rank-up when someone reaches a threshold.</p></article>
       <article class="feat"><span class="tile t-bl"><svg class="ic"><use href="#i-wallet"/></svg></span><h3>Money dropping soon</h3><p>See each person's payout amount and date, so you can plan the days they place their PPV order.</p></article>
       <article class="feat"><span class="tile t-pk"><svg class="ic"><use href="#i-star"/></svg></span><h3>Welcome and celebration</h3><p>New sign-ups get a welcome email and the whole team sees who stepped up and who sponsored them.</p></article>
       <article class="feat"><span class="tile t-acc"><svg class="ic"><use href="#i-shield"/></svg></span><h3>Clear roles</h3><p>Admins manage the team. A QSM sees only their own downline. Members see only themselves.</p></article>
@@ -394,7 +378,7 @@ footer .links a{color:var(--foot-ink)}
       <div class="rk"><b>Senior Manager</b><span class="q">1,000 QPV</span><div class="bar"><i style="width:25%"></i></div></div>
       <div class="rk"><b>Executive Manager</b><span class="q">2,000 QPV</span><div class="bar"><i style="width:50%"></i></div></div>
       <div class="rk"><b>Director</b><span class="q">4,000 QPV</span><div class="bar"><i style="width:100%"></i></div></div>
-      <p class="foot">TeamPulse recommends. Your leader confirms every rank change.</p>
+      <p class="foot"><b>A title is yours once you earn it.</b> Every month you need 100 PPV and your title's QPV to be <b>Qualified</b>. A month without it, you keep the title but you are <b>Title only</b>, and you earn from the bonus chart by that month's QPV. TeamPulse recommends rank changes. Your leader confirms every one.</p>
     </div>
   </div>
 </section>
@@ -440,6 +424,7 @@ footer .links a{color:var(--foot-ink)}
   <div class="in">
     <div class="sec-head c"><span class="eyebrow">Questions</span><h2>Before you sign in.</h2></div>
     <div class="faq">
+      <details><summary>What is the difference between my title and being Qualified?</summary><p>Your title (Manager, Senior Manager and so on) is earned once and kept. Being Qualified is monthly. Each month you need 100 PPV and the QPV of your title. If you miss it, you keep your title for that month but you are Title only, and you earn from the bonus chart by that month's QPV.</p></details>
       <details><summary>Who sees my numbers?</summary><p>Your team leader, who is the Admin. If you are in a QSM's downline, that QSM sees your answers too. Other members never see them.</p></details>
       <details><summary>What if I miss a question?</summary><p>Each question stays open for three days after its date. After that it is marked Missed. Next month's question opens on its own, and you never have to answer several months at once.</p></details>
       <details><summary>Can I change my NeoLife ID?</summary><p>No. It is your official number, so only your team leader can correct it, and every correction is logged. You can change your name, picture and other details yourself.</p></details>
@@ -490,6 +475,12 @@ form.addEventListener('submit',e=>{
 let tt;const toast=t=>{const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{el.hidden=true},3200)};
 $('#forgot').addEventListener('click',()=>{location.href='/forgot'});
 
+
+/* today's date and the time in Lagos, so everyone sees the same clock */
+(function(){const el=document.getElementById('nowpill');if(!el)return;
+  const d=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Lagos',weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const h=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Lagos',hour:'2-digit',minute:'2-digit',hour12:false});
+  const tick=()=>{const n=new Date();el.innerHTML=d.format(n)+' <b>'+h.format(n)+'</b> Lagos'};tick();setInterval(tick,15000)})();
 </script>
 
 </body></html>

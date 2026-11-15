@@ -35,3 +35,38 @@ export function systemQpv(people: Person[], ppv: Map<string, number>): Map<strin
 }
 
 export const nextRank = (rank: number) => (rank < RANKS.length - 1 ? RANKS[rank + 1] : null);
+
+/** Sales Volume Bonus chart from the NeoLife compensation plan: monthly QPV needed for each rate. */
+export const SVB_CHART = [
+  { qpv: 250, rate: 3 }, { qpv: 500, rate: 5 }, { qpv: 1000, rate: 10 },
+  { qpv: 2000, rate: 15 }, { qpv: 3000, rate: 20 }, { qpv: 4000, rate: 25 },
+] as const;
+
+/** The bonus rate this month's QPV reaches. It needs 100 PPV, or there is no bonus at all. Null if none. */
+export function svbRate(ppv: number | null, qpv: number | null): number | null {
+  if (ppv == null || ppv < MIN_PPV || qpv == null) return null;
+  let rate: number | null = null;
+  for (const s of SVB_CHART) if (qpv >= s.qpv) rate = s.rate;
+  return rate;
+}
+
+export type MonthStatus =
+  | { state: "unreported" }
+  | { state: "qualified"; rate: number | null }
+  | { state: "title_only"; why: string[]; rate: number | null };
+
+/**
+ * A title (Manager, Senior Manager...) is earned once and kept. Qualified status is earned again every month:
+ * at least 100 PPV, and for Manager and above the QPV of the title. A month without it, the member keeps the
+ * title but is "Title only": they earn from the bonus chart by that month's QPV, and only with 100 PPV.
+ * A Distributor is qualified for the month with 100 PPV.
+ */
+export function monthStatus(p: { role: string; rank: number; ppv: number | null; qpv: number | null }): MonthStatus {
+  if (p.ppv == null) return { state: "unreported" };
+  const need = RANKS[Math.min(p.rank, RANKS.length - 1)].qpv;
+  const why: string[] = [];
+  if (p.ppv < MIN_PPV) why.push(`PPV ${p.ppv} is under the ${MIN_PPV} needed`);
+  if (p.rank >= 1 && (p.qpv == null || p.qpv < need)) why.push(`QPV ${p.qpv ?? 0} is under the ${need.toLocaleString("en-US")} needed for ${RANKS[p.rank].name}`);
+  const rate = svbRate(p.ppv, p.qpv);
+  return why.length ? { state: "title_only", why, rate } : { state: "qualified", rate };
+}

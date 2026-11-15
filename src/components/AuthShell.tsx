@@ -3,9 +3,11 @@ import Link from "next/link";
 export function Brand() {
   return (
     <Link className="brand" href="/" title="Back to the landing page">
-      <svg width="30" height="30" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-        <path d="M2 15h6l3-9 5 17 3-8h7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <span className="mark">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <path d="M2 15h6l3-9 5 17 3-8h7" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
       TeamPulse
     </Link>
   );

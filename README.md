@@ -22,6 +22,10 @@ The clickable prototype in `../prototype` is the design reference. This folder i
 
 - **Email failures are visible**: if a welcome email does not go out (for example the Resend domain is not verified yet), the leader sees a clear notice on the member-added page, a banner and a note on the dashboard, and on the member's page, with the reason in plain words and a **Send the email again** button. Registration shows an error instead of stalling if the confirmation email cannot be sent. The leader's **Send password reset** button does the same: it says whether the email went out, and the member's old password is only cleared after the email was delivered, so a failed send never locks anyone out.
 
+- **Title versus monthly status**: a title is kept once earned; each month a member must have 100 PPV and their title's QPV to be Qualified, otherwise they are Title only (see `src/lib/ranks.ts`).
+- **Date, time and calendar** in the top bar of every page (Lagos time), a month calendar with the check-in dates and windows, and a This week strip.
+- **Design**: light dashboard style with a blue accent, on the app and the website.
+
 Coming next: Resend setup for real email delivery to any address, a privacy notice, then desktop apps on the real app.
 
 ## Try it on your computer (no accounts needed)

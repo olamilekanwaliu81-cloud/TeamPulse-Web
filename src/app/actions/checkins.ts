@@ -70,7 +70,7 @@ export async function saveCheckin(_: FormState, f: FormData): Promise<FormState>
     else await db()`update claims set state = 'dismissed', updated_at = now() where by_user = ${u.id} and occ = ${s.occ.id} and state = 'review'`;
   }
   revalidatePath("/", "layout");
-  return { ok: key === "ppv" && Number(p.answers.ppv) < 100 ? "Saved. Under 100 PPV, so your leader will see a flag." : key === "ppv" ? "Saved. You meet the 100 PPV minimum." : "Saved." };
+  return { ok: key === "ppv" && Number(p.answers.ppv) < 100 ? "Saved. Under 100 PPV, so you are Title only this month." : key === "ppv" ? "Saved. You meet the 100 PPV needed." : "Saved." };
 }
 
 export async function remindMember(f: FormData) {

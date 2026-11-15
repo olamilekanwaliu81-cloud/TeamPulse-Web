@@ -6,7 +6,7 @@ import { initials } from "@/lib/rules";
 
 export type TreeNode = {
   id: string; name: string; photo: string | null; rank: string; status: "invited" | "active" | "inactive";
-  tpId: string; ppv: number | null; qpv: number | null; children: TreeNode[];
+  tpId: string; ppv: number | null; qpv: number | null; month: "qualified" | "title_only" | "unreported"; children: TreeNode[];
 };
 
 const HUES = ["#3A5BA0", "#7A3B3B", "#4B4B9A", "#3B6B4F", "#6B5A2B", "#5A3B7A"];
@@ -24,6 +24,7 @@ function Card({ n, root, count, closed, toggle }: { n: TreeNode; root?: boolean;
       <span className="orank">{n.rank}</span>
       <span className="ost">{n.status === "invited" ? "Invited. No login yet." : n.status === "inactive" ? "Inactive" : root ? `${count} directly sponsored` : n.ppv == null ? "No PPV yet" : `${n.ppv.toLocaleString("en-US")} PPV`}</span>
       {!root && n.status === "active" && count > 0 && n.qpv != null && <span className="ost sm">{n.qpv.toLocaleString("en-US")} QPV</span>}
+      {!root && n.status === "active" && n.month !== "unreported" && <span className={`st ${n.month === "qualified" ? "q" : "t"}`} style={{ marginTop: 4 }}>{n.month === "qualified" ? "Qualified" : "Title only"}</span>}
       <span className="mono oid">{n.tpId}</span>
     </>
   );
@@ -84,7 +85,7 @@ export function TreeView({ root, team }: { root: TreeNode; team: string }) {
     const PAD = 36, HEAD = 64, K = 2, cv = document.createElement("canvas");
     cv.width = (W + PAD * 2) * K; cv.height = (H + PAD * 2 + HEAD) * K;
     const c = cv.getContext("2d")!; c.scale(K, K);
-    const ACC = "#6A5AE0", INK = "#171C3F", MUT = "#686E8E", FONT = "system-ui,-apple-system,sans-serif";
+    const ACC = "#2F62F5", INK = "#0F1B44", MUT = "#6B7799", FONT = "system-ui,-apple-system,sans-serif";
     c.fillStyle = "#fff"; c.fillRect(0, 0, cv.width, cv.height);
     const ox = PAD, oy = PAD + HEAD;
     c.textBaseline = "top"; c.textAlign = "left";

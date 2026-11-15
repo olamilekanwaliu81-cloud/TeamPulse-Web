@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icons";
 import { Avatar } from "./Avatar";
 import { signOut } from "@/app/actions/auth";
+import { ClockCalendar } from "./ClockCalendar";
 
 export type Notice = { kind: string; title: string; sub: string; href: string };
 type Person = { id: string; name: string; photo: string | null; tpId: string; subtitle: string; role: string };
@@ -12,7 +13,7 @@ type Person = { id: string; name: string; photo: string | null; tpId: string; su
 const GLYPH: Record<string, string> = { invite: "✉", signup: "+", rank: "★", checkin: "✓" };
 
 /** Bell and account menu. Each opens a small panel under its button, and closes on a click elsewhere or Escape. */
-export function TopBar({ person, notices }: { person: Person; notices: Notice[] }) {
+export function TopBar({ person, notices, clock }: { person: Person; notices: Notice[]; clock: { today: string; tz: string; isTest: boolean } }) {
   const [open, setOpen] = useState<"bell" | "me" | null>(null);
   const box = useRef<HTMLDivElement>(null);
 
@@ -27,6 +28,7 @@ export function TopBar({ person, notices }: { person: Person; notices: Notice[] 
   const n = notices.length;
   return (
     <div className="top-right" ref={box}>
+      <ClockCalendar today={clock.today} tz={clock.tz} isTest={clock.isTest} />
       <div className="popwrap">
         <button className="iconbtn" type="button" aria-label={`Notifications${n ? ` (${n})` : ""}`} aria-expanded={open === "bell"} onClick={() => setOpen(open === "bell" ? null : "bell")}>
           <Icon name="bell" />{n ? <i /> : null}
