@@ -1,12 +1,12 @@
-import { appUrl, sendMail } from "./mail";
+import { appUrl, sendMail, type MailResult } from "./mail";
 import { createToken } from "./tokens";
 import { firstName } from "./rules";
 import type { User } from "./users";
 
 export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export async function sendVerifyEmail(to: { name: string; email: string; team: string }, token: string) {
-  await sendMail({
+export async function sendVerifyEmail(to: { name: string; email: string; team: string }, token: string): Promise<MailResult> {
+  return sendMail({
     to: to.email, name: to.name, subject: "Confirm your email for TeamPulse",
     html: `<p>Hi ${esc(firstName(to.name))}, confirm your email to finish creating <b>${esc(to.team)}</b>. The link works for 7 days.</p>`,
     ctaLabel: "Confirm my email", ctaUrl: `${appUrl()}/verify/${token}`,
@@ -14,10 +14,10 @@ export async function sendVerifyEmail(to: { name: string; email: string; team: s
 }
 
 /** The welcome email: ID, website, three steps and one button that opens the create-your-login page. */
-export async function sendWelcomeEmail(member: User, sponsor: User) {
+export async function sendWelcomeEmail(member: User, sponsor: User): Promise<MailResult> {
   const token = await createToken("setpw", member.id);
   const site = appUrl();
-  await sendMail({
+  return sendMail({
     to: member.email, name: member.name,
     subject: `Welcome to the family, ${firstName(member.name)}! Your TeamPulse ID is ${member.tpId}`,
     html: `<p>Congratulations, ${esc(firstName(member.name))}, and welcome to the family! ${esc(sponsor.name)} is proud of you for stepping up and joining the business. Your first order of ${member.firstPv ?? 0} PV makes you a NeoLife Distributor today.</p>
@@ -33,9 +33,9 @@ export async function sendWelcomeEmail(member: User, sponsor: User) {
   });
 }
 
-export async function sendResetEmail(user: User, byLeader = false) {
+export async function sendResetEmail(user: User, byLeader = false): Promise<MailResult> {
   const token = await createToken("reset", user.id);
-  await sendMail({
+  return sendMail({
     to: user.email, name: user.name, subject: "Reset your TeamPulse password",
     html: `<p>Hi ${esc(firstName(user.name))},</p><p>${byLeader
       ? `Your team leader asked us to help you set a new password for TeamPulse ID <b>${esc(user.tpId)}</b>.`

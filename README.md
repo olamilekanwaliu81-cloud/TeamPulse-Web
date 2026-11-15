@@ -20,6 +20,8 @@ The clickable prototype in `../prototype` is the design reference. This folder i
 - **Sign-up reports**: a member reports a new sign-up on any day, or by answering "Yes" in the 25th check-in. The leader reviews it: ask the member for the person's details (emailed button), add the person (form pre-filled, sponsor set to the reporting member), or dismiss. Changing the check-in answer to "No" withdraws the report if the leader has not acted.
 - **Team table, tree and profiles** now show PPV and QPV, and members see their progress to the next rank.
 
+- **Email failures are visible**: if a welcome email does not go out (for example the Resend domain is not verified yet), the leader sees a clear notice on the member-added page, a banner and a note on the dashboard, and on the member's page, with the reason in plain words and a **Send the email again** button. Registration shows an error instead of stalling if the confirmation email cannot be sent.
+
 Coming next: Resend setup for real email delivery to any address, a privacy notice, then desktop apps on the real app.
 
 ## Try it on your computer (no accounts needed)

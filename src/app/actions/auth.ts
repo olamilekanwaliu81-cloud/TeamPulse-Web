@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/session";
 import { createToken, peekToken, consumeToken, whyText } from "@/lib/tokens";
 import { sendResetEmail, sendVerifyEmail } from "@/lib/emails";
+import { notDelivered } from "@/lib/mail";
 import {
   MAX_TRIES, makeTpId, normalizeTpId, strongPassword, validEmail, validNeoId, validTpId,
 } from "@/lib/rules";
@@ -42,7 +43,8 @@ export async function registerLeader(_: FormState, f: FormData): Promise<FormSta
     return { error: "An account with this email already exists. Sign in instead." };
   if ((await sql`select 1 from users where neo_id = ${neo}`).length) return { error: "That NeoLife ID already has an account." };
   const token = await createToken("verify", null, { name, team, email, neo, pwHash: await bcrypt.hash(p1, 12) });
-  await sendVerifyEmail({ name, email, team }, token);
+  const sent = await sendVerifyEmail({ name, email, team }, token);
+  if (notDelivered(sent.status)) return { error: "We could not send the confirmation email right now. Please try again in a few minutes." };
   redirect(`/register/sent?e=${encodeURIComponent(email)}`);
 }
 

@@ -10,6 +10,7 @@ import { ago } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { resendInvite } from "@/app/actions/team";
 import { monthStats, recommendations } from "@/lib/stats";
+import { latestMailStatus, mailProblem, notDelivered } from "@/lib/mail";
 import { teamClaims } from "@/lib/claims";
 import { RANKS } from "@/lib/rules";
 import { confirmRank, dismissRank } from "@/app/actions/ranks";
@@ -50,6 +51,8 @@ export default async function Dashboard() {
   const paidAns = await teamAnswers(u.teamId, "paid", paidOcc.month);
   const unpaid = paidAns.filter((a) => a.answers.paid === false && a.occ === paidOcc.id);
 
+  const welcome = await latestMailStatus(invited.map((m) => m.email), "Welcome to the family");
+  const unsent = invited.filter((m) => notDelivered(welcome.get(m.email.toLowerCase())?.status));
   const stats = await monthStats(u.teamId, all, T);
   const recs = await recommendations(u.teamId, all, stats);
   const claims = (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready");
@@ -64,6 +67,13 @@ export default async function Dashboard() {
           <p className="sub">{team}{active.length ? <> · Check-in completion this month: <b>{pct}%</b>. Target 75 to 80%.</> : null}</p></div>
         <Link className="btn primary" href="/team/add">Add a member</Link>
       </div>
+
+      {unsent.length > 0 && (
+        <div className="notice bad" role="alert">
+          <b>{unsent.length === 1 ? "1 welcome email did not go out." : `${unsent.length} welcome emails did not go out.`}</b>
+          <p style={{ margin: "4px 0 0" }}>{mailProblem(welcome.get(unsent[0].email.toLowerCase())?.status, welcome.get(unsent[0].email.toLowerCase())?.error)} Find them under &quot;Invited, no login yet&quot; below and press Resend once it is fixed.</p>
+        </div>
+      )}
 
       {members.length === 0 ? (
         <section className="card" style={{ maxWidth: 640 }}>
@@ -87,7 +97,8 @@ export default async function Dashboard() {
               {invited.length ? (
                 <div className="rows">{invited.map((m) => (
                   <div className="row" key={m.id}>
-                    <div className="grow"><div className="name">{m.name}</div><div className="sub">Added {ago(m.joinedAt)} · {m.tpId} · first order {m.firstPv ?? 0} PV</div></div>
+                    <div className="grow"><div className="name">{m.name}</div><div className="sub">Added {ago(m.joinedAt)} · {m.tpId} · first order {m.firstPv ?? 0} PV</div>
+                      {notDelivered(welcome.get(m.email.toLowerCase())?.status) && <div className="sub" style={{ color: "var(--bad)", fontWeight: 600 }}>Welcome email not delivered. Give them their ID yourself, or resend.</div>}</div>
                     <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn sm" type="submit">Resend</button></form>
                   </div>))}</div>
               ) : <p className="sub">Everyone has created their login.</p>}

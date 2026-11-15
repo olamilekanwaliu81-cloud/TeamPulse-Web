@@ -54,7 +54,7 @@ export async function resendInvite(f: FormData) {
     const sponsor = (m.sponsorId && (await userById(m.sponsorId))) || leader;
     await sendWelcomeEmail(m, sponsor);
   }
-  revalidatePath("/dashboard");
+  revalidatePath("/", "layout");
 }
 
 export async function sendMemberReset(f: FormData) {

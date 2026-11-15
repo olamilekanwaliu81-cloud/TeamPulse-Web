@@ -10,21 +10,52 @@ export const mailboxEnabled = () => process.env.NODE_ENV !== "production" || pro
  * Every email is saved in mail_log. When RESEND_API_KEY and EMAIL_FROM are set it is also sent for real.
  * Without them (local testing) it is only saved, and you read it at /dev/mailbox.
  */
-export async function sendMail(m: Mail): Promise<void> {
+export type MailResult = { status: "logged" | "sent" | "failed"; error?: string };
+
+export async function sendMail(m: Mail): Promise<MailResult> {
   const rows = await db()<{ id: string }[]>`
     insert into mail_log (to_email, to_name, subject, html, cta_label, cta_url)
     values (${m.to}, ${m.name}, ${m.subject}, ${m.html}, ${m.ctaLabel ?? null}, ${m.ctaUrl ?? null}) returning id`;
   const id = rows[0].id;
   const key = process.env.RESEND_API_KEY, from = process.env.EMAIL_FROM;
-  if (!key || !from) return;
+  if (!key || !from) return { status: "logged" }; // saved only: nothing was delivered
   try {
     const { data, error } = await new Resend(key).emails.send({ from, to: m.to, subject: m.subject, html: wrap(m) });
     if (error) throw new Error(error.message);
     await db()`update mail_log set status = 'sent', provider_id = ${data?.id ?? null} where id = ${id}`;
+    return { status: "sent" };
   } catch (e) {
-    await db()`update mail_log set status = 'failed', error = ${String((e as Error).message ?? e).slice(0, 500)} where id = ${id}`;
+    const error = String((e as Error).message ?? e).slice(0, 500);
+    await db()`update mail_log set status = 'failed', error = ${error} where id = ${id}`;
     console.error("Email failed:", e);
+    return { status: "failed", error };
   }
+}
+
+/** In production an email that was only "logged" was never delivered, because the email service is not connected. */
+export const notDelivered = (status: string | undefined) => status === "failed" || (status === "logged" && !mailboxEnabled());
+
+/** What went wrong, in words a team leader can act on. */
+export function mailProblem(status: string | undefined, error?: string | null): string {
+  if (status === "logged") return "Email is not connected on this site yet. Add RESEND_API_KEY and EMAIL_FROM in the site settings.";
+  const e = (error ?? "").toLowerCase();
+  if (/not verified|verify your domain|domain is not|testing email|your own email/.test(e)) return "Your sending domain is not verified in Resend yet, so Resend only delivers to your own address.";
+  if (/api key is invalid|invalid api key|restricted_api_key|unauthorized|403|401/.test(e)) return "The Resend key was refused. Check RESEND_API_KEY in the site settings.";
+  if (/rate limit|too many|daily|quota/.test(e)) return "Resend's sending limit was reached. Try again later.";
+  if (/invalid .?to|invalid email|recipient/.test(e)) return "Resend rejected this email address. Check it is spelled correctly.";
+  return "The email service could not send it.";
+}
+
+/** The newest email of a kind to each address, so pages can say whether it went out. */
+export async function latestMailStatus(emails: string[], subjectPrefix: string): Promise<Map<string, { status: string; error: string | null }>> {
+  const out = new Map<string, { status: string; error: string | null }>();
+  if (!emails.length) return out;
+  const rows = await db()<{ to_email: string; status: string; error: string | null }[]>`
+    select distinct on (lower(to_email)) to_email, status, error from mail_log
+    where lower(to_email) in ${db()(emails.map((e) => e.toLowerCase()))} and subject like ${subjectPrefix + "%"}
+    order by lower(to_email), created_at desc`;
+  for (const r of rows) out.set(r.to_email.toLowerCase(), { status: r.status, error: r.error });
+  return out;
 }
 
 /** The HTML that is actually sent: the message, a button, and a plain-text link under it. */

@@ -9,6 +9,8 @@ import { resendInvite, sendMemberReset } from "@/app/actions/team";
 import { answersOf, summarize } from "@/lib/answers";
 import { rankHistory, monthStats } from "@/lib/stats";
 import { today } from "@/lib/clock";
+import { latestMailStatus, notDelivered } from "@/lib/mail";
+import { MailNotice } from "@/components/MailNotice";
 import { CI, dmyDay, monthLabel, parseDay } from "@/lib/checkins";
 
 export default async function Member({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +22,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
   const all = await teamMembers(viewer.teamId);
   if (m.id !== viewer.id && !scopeFor(viewer, all).some((x) => x.id === m.id)) notFound(); // outside the viewer's downline
   const sponsor = all.find((x) => x.id === m.sponsorId);
+  const mail = viewer.role === "admin" && m.status === "invited" ? (await latestMailStatus([m.email], "Welcome to the family")).get(m.email.toLowerCase()) : undefined;
   const admin = viewer.role === "admin";
   const history = m.status === "invited" ? [] : await answersOf(m.id);
   const [ranks, stat] = await Promise.all([rankHistory(m.id), monthStats(viewer.teamId, all, await today()).then((s) => s.get(m.id))]);
@@ -27,6 +30,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
     <>
       <div className="head"><div><h2>{m.name}</h2><p className="sub" style={{ margin: "2px 0 0" }}>{rankName(m.rank)} · {m.status === "invited" ? "Invited, no login yet" : m.status === "inactive" ? "Inactive" : "Active"}</p></div>
         <Link className="btn" href="/team">Back to team</Link></div>
+      {mail && notDelivered(mail.status) && <MailNotice memberId={m.id} email={m.email} status={mail.status} error={mail.error} />}
       <section className="card" style={{ marginTop: 12, maxWidth: 720 }}>
         <div className="inline"><Avatar user={m} size="lg" /><div><b>{m.name}</b><div className="sub">TeamPulse ID <span className="mono">{m.tpId}</span> · NeoLife ID <span className="mono">{m.neoId}</span></div></div></div>
         <div className="kv" style={{ marginTop: 16 }}>
