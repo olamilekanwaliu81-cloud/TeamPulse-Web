@@ -28,6 +28,7 @@ export default async function Dashboard() {
   const [all, team] = await Promise.all([teamMembers(u.teamId), teamName(u.teamId)]);
   const members = all.filter((m) => m.id !== u.id);
   const invited = members.filter((m) => m.status === "invited");
+  const inactive = members.filter((m) => m.status === "inactive");
   const active = members.filter((m) => m.status === "active");
   const byId = new Map(all.map((m) => [m.id, m]));
 
@@ -100,7 +101,7 @@ export default async function Dashboard() {
       ) : (
         <>
           <div className="statrow">
-            <StatCard icon="users" tone="blue" label="Team members" value={members.length} note={`${active.length} active · ${invited.length} invited`} />
+            <StatCard icon="users" tone="blue" label="Team members" value={members.length} note={`${active.length} active · ${invited.length} invited${inactive.length ? ` · ${inactive.length} inactive` : ""}`} />
             <StatCard icon="circleCheck" tone="green" label="Qualified this month" value={qualified} note={`${titleOnly} title only · ${noBonus} no bonus`} />
             <StatCard icon="clock" tone="orange" label="Check-in completion" value={`${pct}%`} note="Target 75 to 80%" />
             <StatCard icon="star" tone="purple" label="Waiting for you" value={recs.length + claims.length} note={`${recs.length} rank-ups · ${claims.length} sign-ups`} />
@@ -138,6 +139,18 @@ export default async function Dashboard() {
                 </section>
               )}
             </div>
+          )}
+
+          {inactive.length > 0 && (
+            <section className="card" style={{ marginBottom: 16 }}>
+              <PanelTitle>Inactive members <span className="pill">{inactive.length} inactive</span></PanelTitle>
+              <div className="rows">{inactive.map((m) => (
+                <div className="row" key={m.id}>
+                  <div className="grow"><Link className="who" href={`/team/${m.id}`} style={{ color: "inherit", textDecoration: "none" }}><Avatar user={m} /><div><div style={{ fontWeight: 700 }}>{m.name} <span className="pill">Inactive</span></div><div className="mono sub">{m.tpId}</div></div></Link></div>
+                  <Link className="btn sm" href={`/team/${m.id}`}>Open</Link>
+                </div>))}</div>
+              <p className="hint" style={{ marginTop: 8 }}>They cannot sign in and get no check-in emails. Open a member to make them active again.</p>
+            </section>
           )}
 
           <div className="dgrid">

@@ -18,12 +18,34 @@ export function recommend(p: { role: string; status: string; rank: number; ppv: 
 }
 
 /**
- * QPV worked out from the team tree: a person's own PPV plus the PPV of everyone below them.
- * People with no PPV reported count as zero. Members who left (inactive) still count for the month they were active.
+ * Who a person's team counts under this month. A person who did not do their PPV does not qualify as a Distributor
+ * that month, so the people they sponsored sit under the nearest upline who did qualify, until they qualify again.
+ * The team leader is always the top. Without a `qualified` test, everyone counts and the real sponsor is used.
  */
-export function systemQpv(people: Person[], ppv: Map<string, number>): Map<string, number> {
+export function effectiveSponsors(people: Person[], qualified?: (id: string) => boolean): Map<string, string | null> {
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const out = new Map<string, string | null>();
+  for (const p of people) {
+    let s = p.sponsorId;
+    for (let hops = 0; qualified && s && hops < people.length; hops++) {
+      const sp = byId.get(s);
+      if (!sp || sp.role === "admin" || qualified(sp.id)) break;
+      s = sp.sponsorId;
+    }
+    out.set(p.id, s);
+  }
+  return out;
+}
+
+/**
+ * QPV worked out from the team tree: a person's own PPV plus the PPV of everyone below them.
+ * People with no PPV reported count as zero. With a `qualified` test, a person who is not qualified this month
+ * keeps their own PPV but their team counts under their upline instead (see effectiveSponsors).
+ */
+export function systemQpv(people: Person[], ppv: Map<string, number>, qualified?: (id: string) => boolean): Map<string, number> {
   const kids = new Map<string, string[]>();
-  for (const p of people) if (p.sponsorId) (kids.get(p.sponsorId) ?? kids.set(p.sponsorId, []).get(p.sponsorId)!).push(p.id);
+  const eff = effectiveSponsors(people, qualified);
+  for (const p of people) { const s = eff.get(p.id); if (s) (kids.get(s) ?? kids.set(s, []).get(s)!).push(p.id); }
   const out = new Map<string, number>();
   const total = (id: string, seen: Set<string>): number => {
     if (seen.has(id)) return 0; // a loop in the sponsor links must not hang us

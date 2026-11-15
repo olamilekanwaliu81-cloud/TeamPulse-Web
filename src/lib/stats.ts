@@ -2,10 +2,15 @@ import { db } from "./db";
 import { teamAnswers } from "./answers";
 import { monthOccs, parseDay, type Day } from "./checkins";
 import { realToday } from "./clock";
-import { recommend, systemQpv } from "./ranks";
+import { MIN_PPV, effectiveSponsors, recommend, systemQpv } from "./ranks";
 import type { User } from "./users";
 
-export type Stat = { ppv: number | null; qpv: number | null; sysQpv: number; earn: number | "none" | null; paid: boolean | null };
+export type Stat = { ppv: number | null; qpv: number | null; sysQpv: number; earn: number | "none" | null; paid: boolean | null;
+  /** Who their team counts under this month: their own sponsor, or the nearest upline who qualified. */
+  effSponsor: string | null;
+  /** True when they did not qualify this month, so the people they sponsored count under their upline. */
+  compressed: boolean;
+};
 
 /** This month's numbers for everyone: what they reported, and the QPV worked out from the team tree. */
 export async function monthStats(teamId: string, people: User[], today: Day): Promise<Map<string, Stat>> {
@@ -23,10 +28,21 @@ export async function monthStats(teamId: string, people: User[], today: Day): Pr
     const j = parseDay(realToday(u.joinedAt));
     if (own == null && j.y === y && j.m === m && u.firstPv != null) own = u.firstPv; // joined this month: the first order counts
     if (own != null) ppv.set(u.id, own);
-    out.set(u.id, { ppv: own, qpv: typeof a?.qpv === "number" ? a.qpv : null, sysQpv: 0, earn: (E.get(u.id)?.answers.earn as Stat["earn"]) ?? null, paid: typeof D.get(u.id)?.answers.paid === "boolean" ? (D.get(u.id)!.answers.paid as boolean) : null });
+    out.set(u.id, { ppv: own, qpv: typeof a?.qpv === "number" ? a.qpv : null, sysQpv: 0, earn: (E.get(u.id)?.answers.earn as Stat["earn"]) ?? null, paid: typeof D.get(u.id)?.answers.paid === "boolean" ? (D.get(u.id)!.answers.paid as boolean) : null, effSponsor: u.sponsorId, compressed: false });
   }
-  const sys = systemQpv(people.map((p) => ({ id: p.id, sponsorId: p.sponsorId, status: p.status, role: p.role })), ppv);
-  for (const [id, s] of out) s.sysQpv = sys.get(id) ?? 0;
+  // Not qualified this month: inactive, or under 100 PPV, or no PPV once the PPV question has closed. Until then no PPV is "not yet".
+  const ppvClosed = monthOccs(today).find((o) => o.key === "ppv")!.close < today;
+  const qualified = (id: string) => {
+    const u = people.find((p) => p.id === id);
+    if (!u || u.role === "admin") return true;
+    if (u.status === "inactive") return false;
+    const own = ppv.get(id);
+    return own == null ? !ppvClosed : own >= MIN_PPV;
+  };
+  const list = people.map((p) => ({ id: p.id, sponsorId: p.sponsorId, status: p.status, role: p.role }));
+  const sys = systemQpv(list, ppv, qualified);
+  const eff = effectiveSponsors(list, qualified);
+  for (const [id, s] of out) { s.sysQpv = sys.get(id) ?? 0; s.effSponsor = eff.get(id) ?? null; s.compressed = !qualified(id); }
   return out;
 }
 

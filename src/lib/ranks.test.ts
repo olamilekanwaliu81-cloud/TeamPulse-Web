@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthStatus, recommend, statusText, svbRate, systemQpv } from "./ranks";
+import { effectiveSponsors, monthStatus, recommend, statusText, svbRate, systemQpv } from "./ranks";
 
 const m = (o: Partial<Parameters<typeof recommend>[0]> = {}) => ({ role: "member", status: "active", rank: 0, ppv: 136, qpv: 600, ...o });
 
@@ -99,5 +99,37 @@ describe("status in plain words", () => {
   it("under 250 QPV there is no bonus even with the status short", () => {
     const s = monthStatus({ role: "member", rank: 1, ppv: 100, qpv: 200 });
     expect(statusText({ rank: 1, ppv: 100, qpv: 200 }, s).detail).toMatch(/under 250/);
+  });
+});
+
+describe("a month without PPV moves the team up", () => {
+  // a (leader) > b > c > d, and b > e
+  const people = [
+    { id: "a", sponsorId: null, status: "active" as const, role: "admin" as const },
+    { id: "b", sponsorId: "a", status: "active" as const, role: "member" as const },
+    { id: "c", sponsorId: "b", status: "active" as const, role: "member" as const },
+    { id: "d", sponsorId: "c", status: "active" as const, role: "member" as const },
+    { id: "e", sponsorId: "b", status: "active" as const, role: "member" as const },
+  ];
+  const ppv = new Map([["b", 150], ["c", 40], ["d", 120], ["e", 100]]);
+  it("keeps the real sponsor when everyone qualifies", () => {
+    const eff = effectiveSponsors(people, () => true);
+    expect(eff.get("d")).toBe("c");
+  });
+  it("puts the team of someone who did not qualify under their upline", () => {
+    const eff = effectiveSponsors(people, (id) => id !== "c");
+    expect(eff.get("d")).toBe("b");
+    expect(eff.get("c")).toBe("b"); // c itself still sits under their own sponsor
+  });
+  it("skips several people in a row, and stops at the team leader", () => {
+    const eff = effectiveSponsors(people, (id) => id !== "c" && id !== "b");
+    expect(eff.get("d")).toBe("a");
+    expect(eff.get("e")).toBe("a");
+  });
+  it("keeps their own PPV but not their team in their system QPV", () => {
+    const q = systemQpv(people, ppv, (id) => id !== "c");
+    expect(q.get("c")).toBe(40); // d moved up to b
+    expect(q.get("b")).toBe(150 + 40 + 120 + 100); // b still counts everyone below
+    expect(systemQpv(people, ppv).get("c")).toBe(160); // without the rule, c counts d
   });
 });

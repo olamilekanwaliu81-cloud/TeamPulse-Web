@@ -49,6 +49,9 @@ export default async function Member({ params }: { params: Promise<{ id: string 
         </div>
         {m.status === "active" && (() => { const ms = monthStatus({ role: m.role, rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }), tx = statusText({ rank: m.rank, ppv: stat?.ppv ?? null, qpv: stat?.qpv ?? null }, ms);
           return <p className="rule" style={{ marginTop: 14 }}><StatusPill s={ms} /> <b>{tx.headline}.</b> {tx.detail}</p>; })()}
+        {stat?.compressed && all.some((x) => x.sponsorId === m.id) && (
+          <p className="rule" style={{ marginTop: 14 }}><b>Their team counts under {all.find((x) => x.id === stat.effSponsor)?.name ?? "the team leader"} this month.</b> {m.status === "inactive" ? "They are inactive" : "They do not qualify as a Distributor this month (no 100 PPV)"}, so the people they sponsored sit under their upline until they qualify again.</p>
+        )}
         {m.bio && <p className="sub" style={{ marginTop: 14 }}>{m.bio}</p>}
         {admin && m.id !== viewer.id && (<>
           <div className="inline" style={{ marginTop: 18 }}>
