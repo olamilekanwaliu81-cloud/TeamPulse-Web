@@ -109,3 +109,29 @@ export async function changePassword(_: FormState, f: FormData): Promise<FormSta
   await db()`update users set pw_hash = ${await bcrypt.hash(p1, 12)} where id = ${u.id}`;
   return { ok: "Password changed." };
 }
+
+/**
+ * The leader removes a member from the database for good. They must type the member's TeamPulse ID to confirm.
+ * People the member sponsored move up to the member's own sponsor, so the tree stays whole.
+ * Their check-in answers, feed items, sign-in links, sign-up forms and emails are deleted with them.
+ */
+export async function removeMember(_: FormState, f: FormData): Promise<FormState> {
+  const leader = await requireAdmin();
+  const m = await ownMember(leader.teamId, text(f, "id"));
+  if (!m) return { error: "That member was not found." };
+  if (m.id === leader.id || m.role !== "member") return { error: "Team leaders cannot be removed here." };
+  if (text(f, "confirm").toUpperCase() !== m.tpId) return { error: `Type their TeamPulse ID (${m.tpId}) to confirm.` };
+  const sql = db();
+  const newSponsor = m.sponsorId && m.sponsorId !== m.id ? m.sponsorId : leader.id;
+  const moved = await sql.begin(async (tx) => {
+    const kids = await tx`update users set sponsor_id = ${newSponsor} where sponsor_id = ${m.id} returning id`;
+    await tx`delete from applications where member_id = ${m.id} or (team_id = ${leader.teamId} and lower(email) = ${m.email.toLowerCase()})`;
+    await tx`delete from claims where member_id = ${m.id}`;
+    await tx`delete from mail_log where lower(to_email) = ${m.email.toLowerCase()}`;
+    await tx`delete from users where id = ${m.id} and team_id = ${leader.teamId}`;
+    return kids.length;
+  });
+  await logAudit(leader.teamId, leader.id, "member.removed", { tpId: m.tpId, downlineMoved: moved });
+  revalidatePath("/", "layout");
+  redirect("/team?removed=1");
+}

@@ -14,10 +14,10 @@ export const metadata = { title: "Team" };
 
 const pill = (m: User) => (m.status === "invited" ? <span className="pill warn">Invited</span> : m.status === "inactive" ? <span className="pill">Inactive</span> : null);
 
-export default async function Team({ searchParams }: { searchParams: Promise<{ view?: string; q?: string }> }) {
+export default async function Team({ searchParams }: { searchParams: Promise<{ view?: string; q?: string; removed?: string }> }) {
   const u = await requireUser();
   if (u.role !== "admin" && u.rank < 2) redirect("/home");
-  const { view, q: rawQ } = await searchParams;
+  const { view, q: rawQ, removed } = await searchParams;
   const q = (rawQ ?? "").trim().toLowerCase();
   const [all, team] = await Promise.all([teamMembers(u.teamId), teamName(u.teamId)]);
   const list = scopeFor(u, all);
@@ -47,6 +47,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ v
           {u.role === "admin" && <Link className="btn primary" href="/team/add">Add a member</Link>}
         </div>
       </div>
+      {removed && u.role === "admin" && <p className="hint good" style={{ marginTop: 12 }}>The member was removed from the database.</p>}
       <section className="card" style={{ marginTop: 12 }}>
         {q && <p className="sub" style={{ margin: "0 0 10px" }}>{shown.length} result{shown.length === 1 ? "" : "s"} for &quot;{rawQ}&quot;. <Link className="link" href="/team">Clear</Link></p>}
         {list.length === 0 ? (

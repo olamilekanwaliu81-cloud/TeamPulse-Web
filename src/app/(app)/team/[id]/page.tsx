@@ -7,7 +7,8 @@ import { monthStatus, statusText } from "@/lib/ranks";
 import { StatusPill } from "@/components/ui";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
-import { resendInvite } from "@/app/actions/team";
+import { removeMember, resendInvite } from "@/app/actions/team";
+import { ActionForm } from "@/components/ActionForm";
 import { ResetPasswordButton } from "@/components/ResetPasswordButton";
 import { answersOf, summarize } from "@/lib/answers";
 import { rankHistory, monthStats } from "@/lib/stats";
@@ -56,6 +57,17 @@ export default async function Member({ params }: { params: Promise<{ id: string 
           </div>
         )}
       </section>
+      {admin && m.id !== viewer.id && m.role === "member" && (
+        <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>
+          <h3>Remove from the team</h3>
+          <p className="sub">For someone who is no longer active. This deletes {m.name} from the database for good: their details, check-in answers and emails.
+            {all.some((x) => x.sponsorId === m.id) ? ` The people they sponsored move up to ${sponsor?.name ?? "you"}.` : ""} Past months of their upline&apos;s team numbers may change. This cannot be undone.</p>
+          <ActionForm action={removeMember} submit="Remove permanently" danger>
+            <input type="hidden" name="id" value={m.id} />
+            <div className="field"><label htmlFor="rm-c">Type their TeamPulse ID ({m.tpId}) to confirm</label><input id="rm-c" name="confirm" type="text" autoComplete="off" /></div>
+          </ActionForm>
+        </section>
+      )}
       <section className="card" style={{ marginTop: 16, maxWidth: 720 }}>
         <h3>Rank history</h3>
         {ranks.length === 0 ? <p className="sub">No rank changes yet.</p> : <div className="rows">{ranks.map((r) => <div className="row" key={r.id}><div className="grow">{rankName(r.from)} to <b>{rankName(r.to)}</b></div><span className="sub">{dmy(r.at)}</span></div>)}</div>}

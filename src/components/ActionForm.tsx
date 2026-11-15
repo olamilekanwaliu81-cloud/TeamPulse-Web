@@ -9,10 +9,11 @@ type Props = {
   children: React.ReactNode;
   secondary?: boolean;
   className?: string;
+  danger?: boolean;
 };
 
 /** A form that runs a server action, shows its error under the fields and disables the button while it works. */
-export function ActionForm({ action, submit, children, secondary, className }: Props) {
+export function ActionForm({ action, submit, children, secondary, className, danger }: Props) {
   const [state, run, pending] = useActionState(action, undefined);
   const sent = useRef<FormData | null>(null);
   const form = useRef<HTMLFormElement>(null);
@@ -32,7 +33,7 @@ export function ActionForm({ action, submit, children, secondary, className }: P
       <p className={`hint ${state?.error ? "bad" : state?.ok ? "good" : ""}`} role="alert" aria-live="polite">
         {state?.error ?? state?.ok ?? ""}
       </p>
-      <button className={`btn ${secondary ? "" : "primary"}`} type="submit" disabled={pending} style={{ width: "100%", justifyContent: "center" }}>
+      <button className={`btn ${danger ? "bad" : secondary ? "" : "primary"}`} type="submit" disabled={pending} style={{ width: "100%", justifyContent: "center" }}>
         {pending ? "One moment…" : submit}
       </button>
     </form>
