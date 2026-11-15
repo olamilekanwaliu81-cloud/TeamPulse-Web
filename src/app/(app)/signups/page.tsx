@@ -10,6 +10,8 @@ import { createInvite, dismissApplication, revokeInvite } from "@/app/actions/ap
 import { newApplications, teamInvites } from "@/lib/applications";
 import { appUrl } from "@/lib/mail";
 import { CopyLink } from "@/components/CopyLink";
+import { WhatsApp } from "@/components/WhatsApp";
+import { inviteText, waLink } from "@/lib/whatsapp";
 
 export const metadata = { title: "Sign-ups" };
 export const maxDuration = 60; // emailing a batch takes a few seconds
@@ -79,6 +81,7 @@ export default async function Signups() {
             <div className="row" key={i.id}>
               <div className="grow"><div className="name">{i.kind === "existing" ? "Existing distributors" : "New sign-ups"} · made {ago(i.createdAt)}</div><div className="sub">{i.sponsorId ? `Suggested sponsor: ${byId.get(i.sponsorId)?.name ?? "someone"} · ` : ""}Works until {i.expiresAt.toLocaleDateString("en-GB")}</div></div>
               <CopyLink url={`${appUrl()}/join/${i.token}`} />
+              <WhatsApp href={waLink(null, inviteText(i.kind, u.name, `${appUrl()}/join/${i.token}`))} label="Share on WhatsApp" />
               <form action={revokeInvite}><input type="hidden" name="id" value={i.id} /><button className="btn sm bad" type="submit">Turn off</button></form>
             </div>))}</div>
         )}

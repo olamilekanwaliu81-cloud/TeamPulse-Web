@@ -18,6 +18,9 @@ import { teamClaims } from "@/lib/claims";
 import { latestMailStatus, mailProblem, notDelivered } from "@/lib/mail";
 import { confirmRank, dismissRank } from "@/app/actions/ranks";
 import { remindMember } from "@/app/actions/checkins";
+import { WhatsApp } from "@/components/WhatsApp";
+import { appUrl } from "@/lib/mail";
+import { nudgeText, waLink, waNumber } from "@/lib/whatsapp";
 
 export const metadata = { title: "Dashboard" };
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -192,6 +195,7 @@ export default async function Dashboard() {
                 <div className="rows">{late.map((m) => (
                   <div className="row" key={m.id}>
                     <div className="grow"><div className="name">{m.name}</div><div className="sub">{per.get(m.id) === 0 ? "No answers yet" : `${per.get(m.id)} of ${dueOf(m).length} answered`}</div></div>
+                    {waNumber(m.phone) && <WhatsApp href={waLink(m.phone, nudgeText(m.name, u.name, due.filter((o) => o.close >= T && !done.get(m.id)?.has(o.id)).map((o) => CI[o.key].title), appUrl()))} />}
                     <form action={remindMember}><input type="hidden" name="id" value={m.id} /><button className="btn sm" type="submit">Remind</button></form>
                   </div>))}</div>
               ) : <p className="sub">Everyone has replied.</p>}

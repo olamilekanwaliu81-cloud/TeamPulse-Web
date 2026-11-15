@@ -9,13 +9,16 @@ import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
 import { deactivateMember, reactivateMember, removeMember, resendInvite } from "@/app/actions/team";
 import { ActionForm } from "@/components/ActionForm";
+import { WhatsApp } from "@/components/WhatsApp";
+import { appUrl } from "@/lib/mail";
+import { nudgeText, waLink, waNumber, welcomeText } from "@/lib/whatsapp";
 import { ResetPasswordButton } from "@/components/ResetPasswordButton";
 import { answersOf, summarize } from "@/lib/answers";
 import { rankHistory, monthStats } from "@/lib/stats";
 import { today } from "@/lib/clock";
 import { latestMailStatus, notDelivered } from "@/lib/mail";
 import { MailNotice } from "@/components/MailNotice";
-import { CI, dmyDay, monthLabel, parseDay } from "@/lib/checkins";
+import { CI, dmyDay, monthLabel, openToday, parseDay } from "@/lib/checkins";
 
 export default async function Member({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await requireUser();
@@ -57,6 +60,9 @@ export default async function Member({ params }: { params: Promise<{ id: string 
           <div className="inline" style={{ marginTop: 18 }}>
             {m.status === "invited" && <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn primary" type="submit">Resend welcome email</button></form>}
             {m.status === "active" && <ResetPasswordButton memberId={m.id} />}
+            {m.status !== "inactive" && (waNumber(m.phone)
+              ? <WhatsApp label="Message on WhatsApp" href={waLink(m.phone, m.status === "invited" ? welcomeText(m.name, viewer.name, m.tpId, appUrl()) : nudgeText(m.name, viewer.name, openToday(await today()).filter((o) => !history.some((a) => a.occ === o.id)).map((o) => CI[o.key].title), appUrl()))} />
+              : <span className="hint">No phone number saved. Ask them to add it in their profile.</span>)}
             {m.role === "member" && m.status !== "inactive" && <form action={deactivateMember}><input type="hidden" name="id" value={m.id} /><button className="btn" type="submit">Make inactive</button></form>}
             {m.role === "member" && m.status === "inactive" && <form action={reactivateMember}><input type="hidden" name="id" value={m.id} /><button className="btn primary" type="submit">Make active again</button></form>}
           </div>
