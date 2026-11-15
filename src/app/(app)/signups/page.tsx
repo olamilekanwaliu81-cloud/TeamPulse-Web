@@ -6,6 +6,10 @@ import { firstName } from "@/lib/rules";
 import { ago } from "@/lib/format";
 import { ActionForm } from "@/components/ActionForm";
 import { askDetails, dismissClaim, reportSignup } from "@/app/actions/claims";
+import { createInvite, dismissApplication, revokeInvite } from "@/app/actions/applications";
+import { newApplications, teamInvites } from "@/lib/applications";
+import { appUrl } from "@/lib/mail";
+import { CopyLink } from "@/components/CopyLink";
 
 export const metadata = { title: "Sign-ups" };
 
@@ -38,7 +42,8 @@ export default async function Signups() {
     );
   }
 
-  const [claims, all] = await Promise.all([teamClaims(u.teamId), teamMembers(u.teamId)]);
+  const [claims, all, apps, invites] = await Promise.all([teamClaims(u.teamId), teamMembers(u.teamId), newApplications(u.teamId), teamInvites(u.teamId)]);
+  const choices = all.filter((m) => m.status !== "inactive");
   const byId = new Map(all.map((m) => [m.id, m]));
   const open = claims.filter(isOpen), done = claims.filter((c) => !isOpen(c));
   return (
@@ -46,6 +51,36 @@ export default async function Signups() {
       <div className="head"><div><h2>Sign-ups</h2><p className="sub" style={{ margin: "2px 0 0" }}>Your members report their sign-ups here. You decide who joins the team.</p></div>
         <Link className="btn primary" href="/team/add">Add a member</Link></div>
       <section className="card" style={{ marginTop: 12 }}>
+        <h3>Forms from new people</h3>
+        {apps.length === 0 ? <div className="empty">No forms waiting. Make a link below and send it to the new person.</div> : (
+          <div className="rows">{apps.map((a) => (
+            <div className="row" key={a.id}>
+              <div className="grow"><div className="name">{a.name}</div><div className="sub">{a.email} · {a.neoId} · {a.firstPv} PV · {ago(a.createdAt)}</div></div>
+              <Link className="btn sm primary" href={`/team/add?app=${a.id}`}>Review and register</Link>
+              <form action={dismissApplication}><input type="hidden" name="id" value={a.id} /><button className="btn sm bad" type="submit">Dismiss</button></form>
+            </div>))}</div>
+        )}
+      </section>
+      <section className="card" style={{ marginTop: 16 }}>
+        <h3>Send a sign-up link</h3>
+        <p className="sub">The new person fills in their own details. Nothing is registered until you check it and choose their sponsor.</p>
+        <ActionForm action={createInvite} submit="Make a link">
+          <div className="f2">
+            <div className="field"><label htmlFor="iv-sp">Suggested sponsor (optional)</label>
+              <select id="iv-sp" name="sponsor" defaultValue=""><option value="">I will choose later</option>{choices.map((m) => <option key={m.id} value={m.id}>{m.name}{m.id === u.id ? " (you)" : ""}</option>)}</select></div>
+            <div className="field"><label htmlFor="iv-em">Email it to them (optional)</label><input id="iv-em" name="email" type="email" autoComplete="off" /></div>
+          </div>
+        </ActionForm>
+        {invites.length > 0 && (
+          <div className="rows" style={{ marginTop: 14 }}>{invites.map((i) => (
+            <div className="row" key={i.id}>
+              <div className="grow"><div className="name">Link made {ago(i.createdAt)}</div><div className="sub">{i.sponsorId ? `Suggested sponsor: ${byId.get(i.sponsorId)?.name ?? "someone"} · ` : ""}Works until {i.expiresAt.toLocaleDateString("en-GB")}</div></div>
+              <CopyLink url={`${appUrl()}/join/${i.token}`} />
+              <form action={revokeInvite}><input type="hidden" name="id" value={i.id} /><button className="btn sm bad" type="submit">Turn off</button></form>
+            </div>))}</div>
+        )}
+      </section>
+      <section className="card" style={{ marginTop: 16 }}>
         <h3>Waiting for you</h3>
         {open.length === 0 ? <div className="empty">No reports waiting.</div> : (
           <div className="rows">{open.map((c) => {

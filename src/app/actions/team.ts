@@ -17,7 +17,8 @@ const text = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 export async function addMember(_: FormState, f: FormData): Promise<FormState> {
   const leader = await requireAdmin();
   const name = text(f, "name"), email = text(f, "email"), phone = text(f, "phone").slice(0, 40), neo = text(f, "neo");
-  const pv = Number(text(f, "pv")), sponsorId = text(f, "sponsor") || leader.id;
+  const pv = Number(text(f, "pv")), appId = text(f, "app"), sponsorId = text(f, "sponsor") || (appId ? "" : leader.id);
+  if (appId && !sponsorId) return { error: "Choose who sponsors this person." };
   if (name.length < 2) return { error: "Enter the member's full name." };
   if (!validEmail(email)) return { error: "Enter a valid email address. The welcome message goes there." };
   if (!validNeoId(neo)) return { error: "NeoLife ID must look like 063-9262173." };
@@ -36,6 +37,8 @@ export async function addMember(_: FormState, f: FormData): Promise<FormState> {
   if (/^[0-9a-f-]{36}$/.test(claimId))
     await sql`update claims set state = 'added', member_id = ${row.id}, updated_at = now()
               where id = ${claimId} and team_id = ${leader.teamId} and state in ('review', 'details_asked', 'ready')`;
+  if (/^[0-9a-f-]{36}$/.test(appId))
+    await sql`update applications set state = 'added', member_id = ${row.id} where id = ${appId} and team_id = ${leader.teamId} and state = 'new'`;
   await logAudit(leader.teamId, leader.id, "member.added", { member: row.id });
   const member = (await userById(row.id))!;
   await sendWelcomeEmail(member, sponsor);

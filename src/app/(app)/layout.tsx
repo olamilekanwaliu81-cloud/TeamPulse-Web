@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icons";
 import { answeredSets } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, openToday, parseDay, teamLine } from "@/lib/checkins";
 import { teamClaims, claimsBy } from "@/lib/claims";
+import { newApplications } from "@/lib/applications";
 import { monthStats, recommendations } from "@/lib/stats";
 import { rankName as rn } from "@/lib/rules";
 import { Brand } from "@/components/AuthShell";
@@ -26,7 +27,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const notices: Notice[] = [];
   const claims = u.role === "admin" ? (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready") : [];
+  const apps = u.role === "admin" ? await newApplications(u.teamId) : [];
   if (u.role === "admin") {
+    for (const a of apps) notices.push({ kind: "signup", title: `${a.name} filled in the sign-up form`, sub: "Choose the sponsor and register them", href: "/signups" });
     for (const c of claims) {
       const by = all.find((m) => m.id === c.byUser);
       notices.push({ kind: "signup", title: `${by?.name ?? "Someone"} reported ${c.count} new sign-up${c.count > 1 ? "s" : ""}`, sub: c.state === "ready" ? "Details received. Ready to add." : "Waiting for your review", href: "/signups" });
@@ -47,7 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const nav: NavItem[] = u.role === "admin"
-    ? [{ href: "/dashboard", label: "Dashboard", icon: "dashboard" }, { href: "/team", label: "Team", icon: "team" }, { href: "/signups", label: "Sign-ups", icon: "signups", badge: claims.length }, { href: "/profile", label: "Settings", icon: "profile" }]
+    ? [{ href: "/dashboard", label: "Dashboard", icon: "dashboard" }, { href: "/team", label: "Team", icon: "team" }, { href: "/signups", label: "Sign-ups", icon: "signups", badge: claims.length + apps.length }, { href: "/profile", label: "Settings", icon: "profile" }]
     : [{ href: "/home", label: "Home", icon: "dashboard" }, { href: "/checkins", label: "Check-ins", icon: "checkins" }, { href: "/signups", label: "Report a sign-up", icon: "signups" }, ...(u.rank >= 2 ? [{ href: "/team", label: "My team", icon: "team" } as NavItem] : []), { href: "/profile", label: "My profile", icon: "profile" }];
 
   const canSearch = u.role === "admin" || u.rank >= 2;

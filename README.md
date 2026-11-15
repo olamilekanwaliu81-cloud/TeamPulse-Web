@@ -85,3 +85,7 @@ Never commit `.env.local`. Keys go only into Supabase, Resend and Vercel.
 - `landing/index.html` is the source of the public landing page. `npm run landing` writes `public/landing.html`.
 - `desktop/macos` is the Mac app (a small window around the live site). `desktop/windows` builds the Windows zip.
 - `npm run desktop` rebuilds both zips into `public/downloads/` and refreshes the landing page.
+
+## Sign-up links
+
+A team leader can make a sign-up link on the Sign-ups page (`/signups`). The new person fills in the form at `/join/<token>`; it lands in "Forms from new people". The leader checks it, **chooses the sponsor** (the form never decides it) and registers them, which sends the welcome email. Links expire after 14 days and can be turned off. Tables: `invites`, `applications` (migration 004; run `npm run db:migrate`).
