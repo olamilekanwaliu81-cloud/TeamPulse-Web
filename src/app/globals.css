@@ -449,3 +449,11 @@ a.ci-item{text-decoration:none;color:inherit}
 .card,.stat,.lad,.pbar,.mrow,.row,.evrow{overflow-wrap:anywhere}
 
 input,select,textarea{text-overflow:ellipsis}
+
+/* Privacy notice */
+.legal{max-width:720px;margin:0 auto;padding:28px 16px 64px;line-height:1.65}
+.legal h1{margin:28px 0 6px}
+.legal h2{font-size:1.1rem;margin:28px 0 6px}
+.legal ul{padding-left:1.2em;display:grid;gap:6px}
+.legal .sub{color:var(--muted)}
+.legal-back{margin-top:32px}

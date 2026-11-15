@@ -20,7 +20,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       <section className="auth-main">
         <Brand />
         <div className="auth-card">{children}</div>
-        <p className="auth-foot"><Link href="/">Back to the landing page</Link><span>TeamPulse</span></p>
+        <p className="auth-foot"><Link href="/">Back to the landing page</Link><span><Link href="/privacy">Privacy</Link></span></p>
       </section>
       <aside className="auth-panel" aria-hidden="true">
         <div className="ap-copy">
