@@ -38,6 +38,8 @@
   ],
   "exclude": [
     "node_modules",
-    "TeamPulse-Web"
+    "TeamPulse-Web",
+    "desktop",
+    "landing"
   ]
 }

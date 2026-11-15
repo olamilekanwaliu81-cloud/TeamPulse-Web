@@ -1,0 +1,29 @@
+TeamPulse for Windows
+=====================
+
+TeamPulse opens in its own window, like any other app. It shows your team's TeamPulse site, so you see
+the same people and numbers as on your phone. It needs an internet connection.
+
+What you need
+- Windows 10 or 11.
+- Microsoft Edge (already on almost every Windows PC) or Google Chrome.
+
+To install
+1. Right-click the zip file you downloaded and choose "Extract All".
+2. Open the extracted folder and double-click "Install TeamPulse".
+3. Open TeamPulse from the Start menu or from the TeamPulse icon on your desktop.
+
+If you only want to try it, double-click "Run TeamPulse without installing".
+
+If Windows shows a warning
+This app is not signed by Microsoft yet, so Windows may ask before it runs.
+- "Do you want to run this file?" : choose Run.
+- "Windows protected your PC" : choose "More info", then "Run anyway".
+
+To remove TeamPulse
+Open the Start menu and choose "Uninstall TeamPulse", or double-click "Uninstall TeamPulse" in this folder.
+Removing it only removes the shortcuts and the sign-in saved on this computer. Your team's data is not deleted.
+
+Where things go
+- The shortcuts and your saved sign-in: %LOCALAPPDATA%\TeamPulse
+- Nothing is installed for other users and no administrator rights are needed.

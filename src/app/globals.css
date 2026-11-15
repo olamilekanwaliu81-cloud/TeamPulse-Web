@@ -179,14 +179,14 @@ td.num,th.num{text-align:right}
 .otree li:last-child::before{border-right:2px solid var(--accent);border-radius:0}
 .otree li:first-child::after{border-radius:0}
 .otree ul ul::before{content:"";position:absolute;top:0;left:50%;border-left:2px solid var(--accent);height:22px}
-.ocard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:170px;padding:0 4px;cursor:pointer;text-align:center}
+.ocard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:176px;padding:0 10px 2px;cursor:pointer;text-align:center}
 .ocard.root{cursor:default}
 .ocard .av.lg{width:92px;height:92px;font-size:1.6rem;border:4px solid var(--accent);box-sizing:border-box;margin-bottom:8px;background-clip:padding-box;transition:box-shadow .15s}
 .ocard.root .av.lg{width:116px;height:116px;font-size:2rem}
 .ocard:hover .av.lg{box-shadow:0 0 0 5px var(--accent-soft)}
 .ocard.inv .av.lg{border-style:dashed;opacity:.8}
 .ocard.dim{opacity:.55}
-.ocard .on{font-size:1.08rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);line-height:1.15;max-width:100%;overflow-wrap:anywhere}
+.ocard .on{font-size:1rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);line-height:1.15;max-width:100%;overflow-wrap:anywhere}
 .ocard.root .on{font-size:1.5rem}
 .ocard .orank{font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:.78rem;color:var(--ink)}
 .ocard .ost{font-size:.85rem;color:var(--ink)}
@@ -252,6 +252,15 @@ input[type=file]{max-width:100%;min-width:0;font-size:.85rem}
   .side nav{flex-direction:row}
   .brand{padding:0 6px}
   .cyclecard{display:none}
+}
+@media (max-width:640px){
+  /* on a phone the menu shows icons, and the name only for the page you are on, so nothing is cut off at the edge */
+  .side{gap:6px}
+  .side .brand{font-size:1.05rem;padding:0 4px}
+  .side nav{gap:2px;flex:1;min-width:0}
+  .nav-item{padding:10px 12px}
+  .nav-item:not([aria-current=page]) span{display:none}
+  .nav-item .pill{margin-left:4px}
 }
 @media (prefers-reduced-motion:no-preference){.meter i{transition:width .3s}}
 
@@ -381,10 +390,11 @@ a.ci-item{text-decoration:none;color:inherit}
 .track{height:7px;border-radius:99px;background:var(--surface2);overflow:hidden}
 .track i{display:block;height:100%;border-radius:99px}
 .donutw{display:flex;align-items:center;justify-content:center;padding:4px 0}
-.donut-n{font:800 30px var(--display);fill:var(--ink)}
-.donut-s{font:500 12px var(--body);fill:var(--muted)}
+.donut-n{font:800 28px var(--display);fill:var(--ink)}
+.donut-s{font:500 11px var(--body);fill:var(--muted)}
 .legend{display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:.86rem}
 .legend div{display:flex;align-items:center;gap:8px}
+.legend span{min-width:0;overflow-wrap:anywhere}
 .legend i{width:10px;height:10px;border-radius:50%;flex:none}
 .legend b{margin-left:auto;font-variant-numeric:tabular-nums}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:10px}
@@ -430,3 +440,12 @@ a.ci-item{text-decoration:none;color:inherit}
 .lad.here .lad-n{background:var(--accent);color:#fff}
 .lad-t{flex:1;min-width:0}.lad-t b{display:block;font-size:.9rem}.lad-t small{color:var(--muted);font-size:.76rem}
 .lad-r{font-weight:800;color:var(--accent);font-size:.9rem;white-space:nowrap}
+
+/* text never runs into an edge: values wrap or shrink inside their cards */
+.stat-t{min-width:0;flex:1}
+.stat b{overflow-wrap:anywhere}
+.stat b.long{font-size:1.35rem;line-height:1.2}
+.stat small,.stat .sub2{overflow-wrap:anywhere}
+.card,.stat,.lad,.pbar,.mrow,.row,.evrow{overflow-wrap:anywhere}
+
+input,select,textarea{text-overflow:ellipsis}

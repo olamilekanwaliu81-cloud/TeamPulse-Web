@@ -11,7 +11,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
   return (
     <nav aria-label="Sections">
       {items.map((i) => (
-        <Link key={i.href} href={i.href} className="nav-item" aria-current={path === i.href || path.startsWith(i.href + "/") ? "page" : undefined}>
+        <Link key={i.href} href={i.href} aria-label={i.label} title={i.label} className="nav-item" aria-current={path === i.href || path.startsWith(i.href + "/") ? "page" : undefined}>
           <Icon name={i.icon} /><span>{i.label}</span>{i.badge ? <span className="pill warn">{i.badge}</span> : null}
         </Link>
       ))}

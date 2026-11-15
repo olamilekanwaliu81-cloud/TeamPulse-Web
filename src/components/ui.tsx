@@ -10,7 +10,7 @@ export function StatCard({ icon, tone, label, value, note }: { icon: IconName; t
   return (
     <div className="stat">
       <span className={`bub ${tone}`}><Icon name={icon} /></span>
-      <div><small>{label}</small><b>{value}</b>{note && <span className="sub2">{note}</span>}</div>
+      <div className="stat-t"><small>{label}</small><b className={typeof value === "string" && value.length > 8 ? "long" : ""}>{value}</b>{note && <span className="sub2">{note}</span>}</div>
     </div>
   );
 }
@@ -19,24 +19,26 @@ export function PanelTitle({ children, href, link }: { children: React.ReactNode
   return <div className="ptitle"><h3>{children}</h3>{href && <Link href={href}>{link ?? "View all"} &rarr;</Link>}</div>;
 }
 
-/** Ring chart with the total in the middle. */
+/** Ring chart with the total in the middle. The hole is wide and long labels split over two lines, so the text never touches the ring. */
 export function Donut({ parts, total, label }: { parts: { value: number; color: string; label: string }[]; total: number; label: string }) {
-  const R = 56, C = 2 * Math.PI * R, sum = parts.reduce((s, p) => s + p.value, 0) || 1;
+  const R = 62, STROKE = 14, C = 2 * Math.PI * R, sum = parts.reduce((s, p) => s + p.value, 0) || 1;
   const segs = parts.filter((p) => p.value > 0).map((p, i, arr) => ({ ...p, start: arr.slice(0, i).reduce((s, x) => s + x.value, 0) }));
+  const words = label.split(" "), split = label.length > 9 && words.length > 1;
+  const lines = split ? [words[0], words.slice(1).join(" ")] : [label];
   return (
     <>
       <div className="donutw">
-        <svg viewBox="0 0 160 160" width="170" height="170" role="img" aria-label={`${label}: ${parts.map((p) => `${p.value} ${p.label}`).join(", ")}`}>
-          <circle cx="80" cy="80" r={R} fill="none" stroke="var(--surface2)" strokeWidth="18" />
+        <svg viewBox="0 0 160 160" width="180" height="180" role="img" aria-label={`${label}: ${parts.map((p) => `${p.value} ${p.label}`).join(", ")}`}>
+          <circle cx="80" cy="80" r={R} fill="none" stroke="var(--surface2)" strokeWidth={STROKE} />
           {segs.map((p) => {
-            const len = Math.max((p.value / sum) * C - 3, 0);
-            return <circle key={p.label} cx="80" cy="80" r={R} fill="none" stroke={p.color} strokeWidth="18" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-((p.start / sum) * C)} transform="rotate(-90 80 80)" />;
+            const len = Math.max((p.value / sum) * C - (segs.length > 1 ? 3 : 0), 0);
+            return <circle key={p.label} cx="80" cy="80" r={R} fill="none" stroke={p.color} strokeWidth={STROKE} strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-((p.start / sum) * C)} transform="rotate(-90 80 80)" />;
           })}
-          <text className="donut-n" x="80" y="82" textAnchor="middle">{total}</text>
-          <text className="donut-s" x="80" y="100" textAnchor="middle">{label}</text>
+          <text className="donut-n" x="80" y={lines.length > 1 ? 78 : 84} textAnchor="middle">{total}</text>
+          {lines.map((ln, i) => <text key={ln} className="donut-s" x="80" y={(lines.length > 1 ? 95 : 102) + i * 13} textAnchor="middle">{ln}</text>)}
         </svg>
       </div>
-      <div className="legend">{parts.map((p) => <div key={p.label}><i style={{ background: p.color }} />{p.label}<b>{p.value}</b></div>)}</div>
+      <div className="legend">{parts.map((p) => <div key={p.label}><i style={{ background: p.color }} /><span>{p.label}</span><b>{p.value}</b></div>)}</div>
     </>
   );
 }

@@ -11,7 +11,8 @@
     "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/migrate.mts",
     "db:local": "node --import tsx scripts/local-db.mts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "desktop": "bash scripts/build_desktop.sh"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -66,7 +66,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {canSearch ? (
             <form className="search" action="/team" role="search">
               <Icon name="search" />
-              <input name="q" type="search" placeholder="Search members, TeamPulse ID or NeoLife ID" aria-label="Search members" />
+              <input name="q" type="search" placeholder="Search members or IDs" aria-label="Search members" />
             </form>
           ) : <span className="search" style={{ visibility: "hidden" }} />}
           <TopBar

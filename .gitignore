@@ -43,3 +43,7 @@ next-env.d.ts
 # local test database
 /.local-db
 !.env.example
+
+# desktop app build output
+/desktop/macos/build/
+/desktop/macos/dist/

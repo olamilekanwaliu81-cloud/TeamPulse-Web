@@ -79,3 +79,9 @@ Never commit `.env.local`. Keys go only into Supabase, Resend and Vercel.
 | `npm run db:migrate` | apply database changes in `db/migrations` |
 | `npm run db:local` | local test database |
 | `npm run landing` | rebuild the landing page from `../landing/index.html` |
+
+## Landing page and desktop apps
+
+- `landing/index.html` is the source of the public landing page. `npm run landing` writes `public/landing.html`.
+- `desktop/macos` is the Mac app (a small window around the live site). `desktop/windows` builds the Windows zip.
+- `npm run desktop` rebuilds both zips into `public/downloads/` and refreshes the landing page.
