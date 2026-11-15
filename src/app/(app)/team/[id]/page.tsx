@@ -5,7 +5,8 @@ import { scopeFor, teamMembers, userById } from "@/lib/users";
 import { rankName } from "@/lib/rules";
 import { dmy } from "@/lib/format";
 import { Avatar } from "@/components/Avatar";
-import { resendInvite, sendMemberReset } from "@/app/actions/team";
+import { resendInvite } from "@/app/actions/team";
+import { ResetPasswordButton } from "@/components/ResetPasswordButton";
 import { answersOf, summarize } from "@/lib/answers";
 import { rankHistory, monthStats } from "@/lib/stats";
 import { today } from "@/lib/clock";
@@ -47,7 +48,7 @@ export default async function Member({ params }: { params: Promise<{ id: string 
         {admin && m.id !== viewer.id && (
           <div className="inline" style={{ marginTop: 18 }}>
             {m.status === "invited" && <form action={resendInvite}><input type="hidden" name="id" value={m.id} /><button className="btn primary" type="submit">Resend welcome email</button></form>}
-            {m.status === "active" && <form action={sendMemberReset}><input type="hidden" name="id" value={m.id} /><button className="btn" type="submit">Send password reset</button></form>}
+            {m.status === "active" && <ResetPasswordButton memberId={m.id} />}
           </div>
         )}
       </section>

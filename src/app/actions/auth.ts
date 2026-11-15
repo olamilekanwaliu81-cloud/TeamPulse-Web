@@ -79,7 +79,7 @@ export async function signIn(_: FormState, f: FormData): Promise<FormState> {
   const bad = "The TeamPulse ID or password is not right.";
   if (!row) { await bcrypt.compare(password, (dummyHash ??= bcrypt.hashSync("not-a-real-password", 12))); return { error: bad }; }
   if (row.status === "inactive") return { error: "This account is not active. Ask your team leader." };
-  if (!row.pw_hash) return { error: "Create your password first. Open the link in your welcome email, or use \"Forgot your password?\"." };
+  if (!row.pw_hash) return { error: "Create your password first. Open the link in your welcome or reset email, or use \"Forgot your password?\"." };
   if (row.locked) return { error: "This account is locked after 5 wrong tries. Use \"Forgot your password?\" or ask your team leader to reset it." };
   if (!(await bcrypt.compare(password, row.pw_hash))) {
     const [r] = await db()<{ failed_tries: number }[]>`

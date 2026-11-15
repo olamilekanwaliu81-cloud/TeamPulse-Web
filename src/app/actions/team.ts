@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { sendResetEmail, sendWelcomeEmail } from "@/lib/emails";
 import { logAudit, userById } from "@/lib/users";
-import { validEmail, validNeoId, strongPassword } from "@/lib/rules";
+import { validEmail, validNeoId, strongPassword, firstName } from "@/lib/rules";
+import { mailProblem, notDelivered } from "@/lib/mail";
 import { freshTpId, type FormState } from "./auth";
 import bcrypt from "bcryptjs";
 
@@ -57,15 +58,21 @@ export async function resendInvite(f: FormData) {
   revalidatePath("/", "layout");
 }
 
-export async function sendMemberReset(f: FormData) {
+/**
+ * The leader sends a member a link to choose a new password. The email goes first. Only when it was delivered
+ * is the old password cleared, so a failed email never locks the member out of an account that still works.
+ */
+export async function sendMemberReset(_: FormState, f: FormData): Promise<FormState> {
   const leader = await requireAdmin();
   const m = await ownMember(leader.teamId, text(f, "id"));
-  if (m && m.status === "active") {
-    await db()`update users set pw_hash = null, locked = false, failed_tries = 0 where id = ${m.id}`;
-    await sendResetEmail(m, true);
-    await logAudit(leader.teamId, leader.id, "member.password_reset", { member: m.id });
-  }
-  revalidatePath("/team");
+  if (!m || m.status !== "active") return { error: "That member cannot be reset." };
+  const sent = await sendResetEmail(m, true);
+  if (notDelivered(sent.status))
+    return { error: `The reset email to ${m.email} did not go out. ${mailProblem(sent.status, sent.error)} Nothing was changed: ${firstName(m.name)} can still sign in with their current password.` };
+  await db()`update users set pw_hash = null, locked = false, failed_tries = 0 where id = ${m.id}`;
+  await logAudit(leader.teamId, leader.id, "member.password_reset", { member: m.id });
+  revalidatePath("/", "layout");
+  return { ok: `Reset email sent to ${m.email}. Their old password no longer works. The link in the email works for 7 days.` };
 }
 
 /** Own profile: contact details, bio and picture. The NeoLife ID is not editable here. */
