@@ -1,3 +1,4 @@
 {
+  "regions": ["arn1"],
   "crons": [{ "path": "/api/cron/checkins", "schedule": "0 7 * * *" }]
 }
