@@ -13,6 +13,7 @@
 @property (strong) WKWebView *webView;
 @property (assign) BOOL selfTestMode;
 @property (assign) BOOL testStarted;
+@property (strong) NSURL *retriedURL; // the page we already quietly retried once after a stall
 @end
 
 @implementation AppDelegate
@@ -25,7 +26,7 @@
 - (NSURL *)pageURL:(NSString *)path { return [NSURL URLWithString:path relativeToURL:[self siteURL]]; }
 
 - (void)loadPath:(NSString *)path {
-    NSURLRequest *req = [NSURLRequest requestWithURL:[self pageURL:path] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:30];
+    NSURLRequest *req = [NSURLRequest requestWithURL:[self pageURL:path] cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:60];
     [self.webView loadRequest:req];
 }
 - (void)loadHome { [self loadPath:@"/"]; }
@@ -85,7 +86,17 @@
     }
     NSURL *url = action.request.URL;
     NSString *scheme = url.scheme.lowercaseString;
-    if ([scheme isEqualToString:@"tp-retry"]) { [self loadHome]; handler(WKNavigationActionPolicyCancel); return; }
+    if ([scheme isEqualToString:@"tp-retry"]) {
+        // "Try again" reloads the page that failed (kept in the link), not the start page. Only pages of our own site are allowed.
+        NSURLComponents *c = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+        NSString *wanted = nil;
+        for (NSURLQueryItem *q in c.queryItems) { if ([q.name isEqualToString:@"u"]) { wanted = q.value; } }
+        NSURL *target = wanted.length ? [NSURL URLWithString:wanted] : nil;
+        if (target && [target.host.lowercaseString isEqualToString:[self siteURL].host.lowercaseString] && [target.scheme.lowercaseString isEqualToString:@"https"]) {
+            [self.webView loadRequest:[NSURLRequest requestWithURL:target cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:60]];
+        } else { [self loadHome]; }
+        handler(WKNavigationActionPolicyCancel); return;
+    }
     if ([scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"]) {
         BOOL ours = [url.host.lowercaseString isEqualToString:[self siteURL].host.lowercaseString];
         if (!ours) {
@@ -131,16 +142,37 @@
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
+    self.retriedURL = nil;
     if (self.selfTestMode) { [self runSelfTest]; }
+}
+
+/// A page that stalled or dropped is tried once more by itself. Only if that fails too do we show the message.
+- (BOOL)retryOnce:(NSError *)error {
+    NSURL *failed = error.userInfo[NSURLErrorFailingURLErrorKey];
+    BOOL stall = error.code == NSURLErrorTimedOut || error.code == NSURLErrorNetworkConnectionLost;
+    if (!stall || !failed || [failed isEqual:self.retriedURL]) { return NO; }
+    self.retriedURL = failed;
+    [self.webView loadRequest:[NSURLRequest requestWithURL:failed cachePolicy:NSURLRequestReloadRevalidatingCacheData timeoutInterval:60]];
+    return YES;
 }
 
 - (void)showOffline:(NSError *)error {
     if (error.code == NSURLErrorCancelled) { return; }
-    NSString *html = @"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+    if ([self retryOnce:error]) { return; }
+    NSURL *failed = error.userInfo[NSURLErrorFailingURLErrorKey];
+    BOOL slow = error.code == NSURLErrorTimedOut || error.code == NSURLErrorNetworkConnectionLost;
+    BOOL offline = error.code == NSURLErrorNotConnectedToInternet || error.code == NSURLErrorCannotFindHost || error.code == NSURLErrorDNSLookupFailed;
+    NSString *title = slow ? @"TeamPulse took too long" : @"TeamPulse cannot connect";
+    NSString *body = slow ? @"The site did not answer in time. Your internet may be slow, or the site is waking up. Your data is safe on the team's site."
+                  : offline ? @"Check that this computer is online, then try again. Your data is safe on the team's site."
+                  : @"The page did not load. Try again in a moment. Your data is safe on the team's site.";
+    NSString *enc = failed.absoluteString ? [failed.absoluteString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]] : @"";
+    NSString *html = [NSString stringWithFormat:@"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
         "<style>body{margin:0;font:16px -apple-system,sans-serif;background:#F4F7FE;color:#0F1B44;display:grid;place-items:center;height:100vh}"
         ".c{max-width:420px;text-align:center;padding:24px}h1{font-size:1.5rem;margin:0 0 8px}p{color:#6B7799;margin:0 0 20px}"
         "a{display:inline-block;background:#2F62F5;color:#fff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:12px}</style>"
-        "<div class=c><h1>TeamPulse cannot connect</h1><p>Check that this computer is online, then try again. Your data is safe on the team's site.</p><a href='tp-retry://now'>Try again</a></div>";
+        "<div class=c><h1>%@</h1><p>%@</p><a href='tp-retry://now?u=%@'>Try again</a></div>", title, body, enc];
+    self.retriedURL = nil;
     [self.webView loadHTMLString:html baseURL:nil];
 }
 

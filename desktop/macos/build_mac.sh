@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP="dist/TeamPulse.app"
-VERSION="0.2.0"
+VERSION="0.3.0"
 TP_URL="${TP_URL:-https://teampulse.owpublishiing.com}"
 OUT="$(cd ../.. && pwd)/public/downloads"
 FLAGS=(-fobjc-arc -O2 -mmacosx-version-min=12.0 -Wno-deprecated-declarations)
