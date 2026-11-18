@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { db } from "./db";
-import { teamAnswers } from "./answers";
+import { teamAnswersMany, type Answer } from "./answers";
 import { monthOccs, parseDay, type Day } from "./checkins";
 import { realToday } from "./clock";
 import { MIN_PPV, effectiveSponsors, recommend, systemQpv } from "./ranks";
@@ -16,10 +17,22 @@ export type Stat = {
   compressed: boolean;
 };
 
-/** This month's numbers for everyone: what they reported, and the QPV worked out from the team tree. */
-export async function monthStats(teamId: string, people: User[], today: Day): Promise<Map<string, Stat>> {
+const STAT_KEYS = ["ppv", "earn", "paid", "ppvdone", "qpvdone"] as const;
+type MonthAnswers = (Answer & { userId: string })[];
+
+/** This month's answers for the whole team, in one query. Cached per request, so the page can start it early. */
+const loadMonthAnswers = (teamId: string, today: Day): Promise<MonthAnswers> => teamAnswersMany(teamId, STAT_KEYS, monthOccs(today)[0].month);
+export const monthAnswers = cache(loadMonthAnswers);
+
+/** This month's numbers for everyone: what they reported, and the QPV worked out from the team tree. Cached per request. */
+export const monthStats = cache((teamId: string, people: User[], today: Day) => monthAnswers(teamId, today).then((a) => computeStats(a, people, today)));
+/** The same, but always from the database right now. For actions that change data. */
+export const monthStatsRaw = async (teamId: string, people: User[], today: Day) => computeStats(await loadMonthAnswers(teamId, today), people, today);
+
+function computeStats(all: MonthAnswers, people: User[], today: Day): Map<string, Stat> {
   const month = monthOccs(today)[0].month;
-  const [ppvA, earnA, paidA, ppvD, qpvD] = await Promise.all((["ppv", "earn", "paid", "ppvdone", "qpvdone"] as const).map((k) => teamAnswers(teamId, k, month)));
+  const by = (k: (typeof STAT_KEYS)[number]) => all.filter((a) => a.key === k);
+  const [ppvA, earnA, paidA, ppvD, qpvD] = STAT_KEYS.map(by);
   const mine = <T extends { month: Day; userId: string }>(rows: T[]) => new Map(rows.filter((r) => r.month === month).map((r) => [r.userId, r]));
   const P = mine(ppvA), E = mine(earnA), D = mine(paidA), PD = mine(ppvD), QD = mine(qpvD);
   const { y, m } = parseDay(today);
@@ -54,9 +67,15 @@ export async function monthStats(teamId: string, people: User[], today: Day): Pr
 
 export type Recommendation = { user: User; to: number; stat: Stat };
 
-export async function recommendations(teamId: string, people: User[], stats: Map<string, Stat>): Promise<Recommendation[]> {
-  const gone = new Set((await db()<{ user_id: string; to_rank: number }[]>`
-    select d.user_id, d.to_rank from rank_dismissals d join users u on u.id = d.user_id where u.team_id = ${teamId}`).map((r) => `${r.user_id}:${r.to_rank}`));
+const loadDismissals = async (teamId: string) => new Set((await db()<{ user_id: string; to_rank: number }[]>`
+  select d.user_id, d.to_rank from rank_dismissals d join users u on u.id = d.user_id where u.team_id = ${teamId}`).map((r) => `${r.user_id}:${r.to_rank}`));
+/** Which rank-ups the leader already dismissed. Cached per request so a page can start it early. */
+export const dismissals = cache(loadDismissals);
+
+export const recommendations = async (teamId: string, people: User[], stats: Map<string, Stat>) => recommend_(people, stats, await dismissals(teamId));
+export const recommendationsRaw = async (teamId: string, people: User[], stats: Map<string, Stat>) => recommend_(people, stats, await loadDismissals(teamId));
+
+function recommend_(people: User[], stats: Map<string, Stat>, gone: Set<string>): Recommendation[] {
   const out: Recommendation[] = [];
   for (const u of people) {
     const s = stats.get(u.id);

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "./db";
 import { CI, KEYS, parseDay, type Day, type Key } from "./checkins";
 
@@ -13,17 +14,26 @@ export async function answersOf(userId: string): Promise<Answer[]> {
 }
 
 /** Answers of many people for the given occurrence ids. Returned as person -> set of answered occurrences. */
-export async function answeredSets(teamId: string, occs: string[]): Promise<Map<string, Set<string>>> {
+export const answeredSets = (teamId: string, occs: string[]) => answeredSetsOnce(teamId, occs.join(","));
+const answeredSetsOnce = cache(async (teamId: string, joined: string): Promise<Map<string, Set<string>>> => {
+  const occs = joined ? joined.split(",") : [];
   const out = new Map<string, Set<string>>();
   if (!occs.length) return out;
   const rows = await db()<{ user_id: string; occ: string }[]>`select user_id, occ from checkin_answers where team_id = ${teamId} and occ in ${db()(occs)}`;
   for (const r of rows) (out.get(r.user_id) ?? out.set(r.user_id, new Set()).get(r.user_id)!).add(r.occ);
   return out;
-}
+});
 
-export async function teamAnswers(teamId: string, key: Key, fromMonth: Day): Promise<(Answer & { userId: string })[]> {
+export const teamAnswers = cache(async (teamId: string, key: Key, fromMonth: Day): Promise<(Answer & { userId: string })[]> => {
   const rows = await db()<Row[]>`select occ, key, month::text as month, answers, answered_at, user_id from checkin_answers
     where team_id = ${teamId} and key = ${key} and month >= ${fromMonth}`;
+  return rows.map((r) => ({ ...toAnswer(r), userId: r.user_id }));
+});
+
+/** Several kinds of answer for one month in ONE query (a page used to ask once per kind). */
+export async function teamAnswersMany(teamId: string, keys: readonly Key[], fromMonth: Day): Promise<(Answer & { userId: string })[]> {
+  const rows = await db()<Row[]>`select occ, key, month::text as month, answers, answered_at, user_id from checkin_answers
+    where team_id = ${teamId} and key in ${db()(keys as Key[])} and month >= ${fromMonth}`;
   return rows.map((r) => ({ ...toAnswer(r), userId: r.user_id }));
 }
 

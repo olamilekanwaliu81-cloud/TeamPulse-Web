@@ -13,7 +13,7 @@ import { Icon } from "@/components/Icons";
 import { ColumnChart, Donut, PanelTitle, RankLadder, StatCard, StatusPill, WeekPanel, greeting } from "@/components/ui";
 import { KEY_COLOR } from "@/lib/calendar";
 import { resendInvite } from "@/app/actions/team";
-import { monthStats, recommendations } from "@/lib/stats";
+import { dismissals, monthAnswers, monthStats, recommendations } from "@/lib/stats";
 import { teamClaims } from "@/lib/claims";
 import { latestMailStatus, mailProblem, notDelivered } from "@/lib/mail";
 import { confirmRank, dismissRank } from "@/app/actions/ranks";
@@ -27,50 +27,54 @@ const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 export default async function Dashboard() {
   const u = await requireAdmin();
   const T = await today();
-  const [all, team] = await Promise.all([teamMembers(u.teamId), teamName(u.teamId)]);
+  // Everything that does not depend on anything else is asked together, in one round trip to the database.
+  const { y, m: mo } = parseDay(T);
+  const occs = monthOccs(T), due = occs.filter((o) => o.open <= T);
+  const paidOcc = occs.find((o) => o.key === "paid")!;
+  const [all, team, done, earn, counts, paidAnswers, mailItems, allClaims, feed] = await Promise.all([
+    teamMembers(u.teamId), teamName(u.teamId), answeredSets(u.teamId, occs.map((o) => o.id)),
+    teamAnswers(u.teamId, "earn", ymd(y, mo - 4, 1)),
+    db()<{ month: string; n: string }[]>`
+      select month::text as month, count(*) as n from checkin_answers where team_id = ${u.teamId} and month >= ${ymd(y, mo - 4, 1)} group by month`,
+    teamAnswers(u.teamId, "paid", paidOcc.month),
+    teamMail(u.teamId, 30), teamClaims(u.teamId),
+    db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
+      select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 6`,
+    monthAnswers(u.teamId, T), dismissals(u.teamId), // started now; read further down
+  ]);
   const members = all.filter((m) => m.id !== u.id);
   const invited = members.filter((m) => m.status === "invited");
   const inactive = members.filter((m) => m.status === "inactive");
   const active = members.filter((m) => m.status === "active");
   const byId = new Map(all.map((m) => [m.id, m]));
 
-  const occs = monthOccs(T), due = occs.filter((o) => o.open <= T);
-  const done = await answeredSets(u.teamId, occs.map((o) => o.id));
   const dueOf = (m: (typeof active)[number]) => due.filter((o) => o.close >= realToday(m.joinedAt));
   const per = new Map(active.map((m) => [m.id, dueOf(m).filter((o) => done.get(m.id)?.has(o.id)).length]));
   const slots = active.reduce((s, m) => s + dueOf(m).length, 0), got = [...per.values()].reduce((a, b) => a + b, 0);
   const pct = slots ? Math.round((got / slots) * 100) : 0;
   const late = active.filter((m) => (per.get(m.id) ?? 0) < dueOf(m).length);
 
-  const { y, m: mo } = parseDay(T);
-  const earn = await teamAnswers(u.teamId, "earn", ymd(y, mo - 4, 1));
   const income = Array.from({ length: 5 }, (_, i) => {
     const d = new Date(Date.UTC(y, mo - 4 + i, 1)), key = ymd(d.getUTCFullYear(), d.getUTCMonth(), 1);
     return { label: d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }), value: earn.filter((a) => a.month === key && typeof a.answers.earn === "number").reduce((s, a) => s + (a.answers.earn as number), 0) };
   });
-  const counts = await db()<{ month: string; n: string }[]>`
-    select month::text as month, count(*) as n from checkin_answers where team_id = ${u.teamId} and month >= ${ymd(y, mo - 4, 1)} group by month`;
   const activity = Array.from({ length: 5 }, (_, i) => {
     const d = new Date(Date.UTC(y, mo - 4 + i, 1)), key = ymd(d.getUTCFullYear(), d.getUTCMonth(), 1);
     return { label: d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }), value: Number(counts.find((c) => c.month.slice(0, 10) === key)?.n ?? 0) };
   });
   const drops = earn.map((a) => ({ a, d: dropOf(a) })).filter((x) => x.d && x.d.date >= T).sort((p, q) => (p.d!.date < q.d!.date ? -1 : 1));
-  const paidOcc = occs.find((o) => o.key === "paid")!;
-  const unpaid = (await teamAnswers(u.teamId, "paid", paidOcc.month)).filter((a) => a.answers.paid === false && a.occ === paidOcc.id);
+  const unpaid = paidAnswers.filter((a) => a.answers.paid === false && a.occ === paidOcc.id);
 
-  const mailTotals = tallies(await teamMail(u.teamId, 30))[0];
-  const welcome = await latestMailStatus(invited.map((m) => m.email), "Welcome to the family");
+  const mailTotals = tallies(mailItems)[0];
+  const [welcome, stats] = await Promise.all([latestMailStatus(invited.map((m) => m.email), "Welcome to the family"), monthStats(u.teamId, all, T)]);
   const unsent = invited.filter((m) => notDelivered(welcome.get(m.email.toLowerCase())?.status));
-  const stats = await monthStats(u.teamId, all, T);
   const recs = await recommendations(u.teamId, all, stats);
-  const claims = (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready");
+  const claims = allClaims.filter((c) => c.state === "review" || c.state === "ready");
   const st = (id: string) => { const m = byId.get(id)!, s = stats.get(id); return monthStatus({ role: m.role, rank: m.rank, ppv: s?.ppv ?? null, qpv: s?.qpv ?? null }); };
   const qualified = active.filter((m) => st(m.id).state === "qualified").length;
   const titleOnly = active.filter((m) => { const s = st(m.id); return s.state === "title_only" && !s.noPpv; }).length;
   const pending = active.filter((m) => st(m.id).state === "unreported").length; // nothing confirmed on the 28th yet
   const noBonus = active.length - qualified - titleOnly - pending; // confirmed under 100 PPV
-  const feed = await db()<{ id: string; kind: string; who: string; by: string | null; data: { to?: number }; created_at: Date }[]>`
-    select id, kind, who, by, data, created_at from feed where team_id = ${u.teamId} order by created_at desc limit 6`;
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date()));
   const progress = occs.map((o) => {
     const elig = active.filter((m) => o.close >= realToday(m.joinedAt));

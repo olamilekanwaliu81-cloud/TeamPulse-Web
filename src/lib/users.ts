@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "./db";
 
 export type Role = "admin" | "member";
@@ -45,15 +46,18 @@ export async function userRowByTpId(tpId: string): Promise<UserRow | null> {
   return rows[0] ?? null;
 }
 
-export async function teamName(teamId: string): Promise<string> {
+// Pages and the side menu ask for the same things in one request. `cache` makes the database answer once per request.
+// Actions that change data use the Raw versions, so they never see an answer from before their own change.
+export const teamName = cache(async (teamId: string): Promise<string> => {
   const rows = await db()<{ name: string }[]>`select name from teams where id = ${teamId}`;
   return rows[0]?.name ?? "";
-}
+});
 
-export async function teamMembers(teamId: string): Promise<User[]> {
+export async function teamMembersRaw(teamId: string): Promise<User[]> {
   const rows = await db()<UserRow[]>`select * from users where team_id = ${teamId} order by joined_at asc`;
   return rows.map(toUser);
 }
+export const teamMembers = cache(teamMembersRaw);
 
 /** People the viewer may see: a team leader sees the whole team, a member sees their own downline. */
 export function scopeFor(viewer: User, all: User[]): User[] {

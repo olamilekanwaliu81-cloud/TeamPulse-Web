@@ -7,7 +7,7 @@ import { answeredSets } from "@/lib/answers";
 import { CI, dmyDay, monthLabel, openToday, parseDay, teamLine } from "@/lib/checkins";
 import { teamClaims, claimsBy } from "@/lib/claims";
 import { newApplications } from "@/lib/applications";
-import { monthStats, recommendations } from "@/lib/stats";
+import { dismissals, monthAnswers, monthStats, recommendations } from "@/lib/stats";
 import { rankName as rn } from "@/lib/rules";
 import { Brand } from "@/components/AuthShell";
 import { NavLinks, type NavItem } from "@/components/NavLinks";
@@ -17,17 +17,21 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const u = await requireUser();
-  const [team, all] = await Promise.all([teamName(u.teamId), teamMembers(u.teamId)]);
-  const mine = scopeFor(u, all);
-
   const T = await today();
   const open = openToday(T);
-  const answered = await answeredSets(u.teamId, open.map((o) => o.id));
+  const admin = u.role === "admin";
+  // Everything the side menu needs is asked together, in one round trip. The page below asks for the same things, and the
+  // cached versions hand it the same answers without going back to the database.
+  const [team, all, answered, allClaims, apps] = await Promise.all([
+    teamName(u.teamId), teamMembers(u.teamId), answeredSets(u.teamId, open.map((o) => o.id)),
+    admin ? teamClaims(u.teamId) : Promise.resolve([]), admin ? newApplications(u.teamId) : Promise.resolve([]),
+    admin ? monthAnswers(u.teamId, T) : null, admin ? dismissals(u.teamId) : null, // started now, read below
+  ]);
+  const mine = scopeFor(u, all);
   const active = mine.filter((m) => m.status === "active" && m.role === "member");
 
   const notices: Notice[] = [];
-  const claims = u.role === "admin" ? (await teamClaims(u.teamId)).filter((c) => c.state === "review" || c.state === "ready") : [];
-  const apps = u.role === "admin" ? await newApplications(u.teamId) : [];
+  const claims = allClaims.filter((c) => c.state === "review" || c.state === "ready");
   if (u.role === "admin") {
     for (const a of apps) notices.push({ kind: "signup", title: `${a.name} filled in the sign-up form`, sub: "Choose the sponsor and register them", href: "/signups" });
     for (const c of claims) {

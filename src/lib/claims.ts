@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "./db";
 
 export type ClaimState = "review" | "details_asked" | "ready" | "added" | "dismissed";
@@ -7,9 +8,8 @@ export type Claim = { id: string; teamId: string; byUser: string; count: number;
 type Row = { id: string; team_id: string; by_user: string; count: number; who: string; state: ClaimState; details: Details | null; member_id: string | null; created_at: Date };
 const toClaim = (r: Row): Claim => ({ id: r.id, teamId: r.team_id, byUser: r.by_user, count: r.count, who: r.who, state: r.state, details: r.details, memberId: r.member_id, createdAt: r.created_at });
 
-export async function teamClaims(teamId: string): Promise<Claim[]> {
-  return (await db()<Row[]>`select * from claims where team_id = ${teamId} order by created_at desc`).map(toClaim);
-}
+export const teamClaims = cache(async (teamId: string): Promise<Claim[]> =>
+  (await db()<Row[]>`select * from claims where team_id = ${teamId} order by created_at desc`).map(toClaim));
 export async function claimsBy(userId: string): Promise<Claim[]> {
   return (await db()<Row[]>`select * from claims where by_user = ${userId} order by created_at desc`).map(toClaim);
 }

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
 
@@ -24,9 +25,8 @@ export async function inviteByToken(token: string): Promise<Invite | null> {
 export async function teamInvites(teamId: string): Promise<Invite[]> {
   return (await db()<InviteRow[]>`select * from invites where team_id = ${teamId} and not revoked and expires_at > now() order by created_at desc`).map(toInvite);
 }
-export async function newApplications(teamId: string): Promise<Application[]> {
-  return (await db()<AppRow[]>`select * from applications where team_id = ${teamId} and state = 'new' order by created_at`).map(toApp);
-}
+export const newApplications = cache(async (teamId: string): Promise<Application[]> =>
+  (await db()<AppRow[]>`select * from applications where team_id = ${teamId} and state = 'new' order by created_at`).map(toApp));
 export async function applicationById(id: string): Promise<Application | null> {
   if (!uuid.test(id)) return null;
   const r = (await db()<AppRow[]>`select * from applications where id = ${id}`)[0];

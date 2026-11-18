@@ -23,13 +23,18 @@ export default async function Member({ params }: { params: Promise<{ id: string 
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const m = await userById(id);
   if (!m || m.teamId !== viewer.teamId) notFound();
-  const all = await teamMembers(viewer.teamId);
+  const T = await today();
+  // Ask for everything this page needs together. Only the checks below need to wait for the team list.
+  const [all, history, ranks, stat, mail] = await Promise.all([
+    teamMembers(viewer.teamId),
+    m.status === "invited" ? Promise.resolve([]) : answersOf(m.id),
+    rankHistory(m.id),
+    teamMembers(viewer.teamId).then((people) => monthStats(viewer.teamId, people, T)).then((s) => s.get(m.id)),
+    viewer.role === "admin" && m.status === "invited" ? latestMailStatus([m.email], "Welcome to the family").then((r) => r.get(m.email.toLowerCase())) : Promise.resolve(undefined),
+  ]);
   if (m.id !== viewer.id && !scopeFor(viewer, all).some((x) => x.id === m.id)) notFound(); // outside the viewer's downline
   const sponsor = all.find((x) => x.id === m.sponsorId);
-  const mail = viewer.role === "admin" && m.status === "invited" ? (await latestMailStatus([m.email], "Welcome to the family")).get(m.email.toLowerCase()) : undefined;
   const admin = viewer.role === "admin";
-  const history = m.status === "invited" ? [] : await answersOf(m.id);
-  const [ranks, stat] = await Promise.all([rankHistory(m.id), monthStats(viewer.teamId, all, await today()).then((s) => s.get(m.id))]);
   return (
     <>
       <div className="head"><div><h2>{m.name}</h2><p className="sub" style={{ margin: "2px 0 0" }}>{rankName(m.rank)} · {m.status === "invited" ? "Invited, no login yet" : m.status === "inactive" ? "Inactive" : "Active"}</p></div>
